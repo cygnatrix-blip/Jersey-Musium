@@ -25,9 +25,42 @@ The code lives on GitHub (`https://github.com/cygnatrix-blip/Jersey-Musium`). Ho
    On the *PHP extensions* tab make sure these are ticked: `pdo_mysql`, `mysqli`, `curl`, `mbstring`, `gd`, `fileinfo`, `openssl`, `dom`, `opcache`. They usually are by default.
 3. **Database:** *Databases → Management* → create a database and user.
    Note the three values, e.g. database `u123456789_jersey`, user `u123456789_jm`, and a strong password (use the generator).
-4. **Empty the website folder:** *Files → File Manager → public_html* → delete the default `default.php` / `index.html`. Git deployment needs an empty folder.
+4. **Empty the website folder:** *Files → File Manager* → open the website folder → delete the default `default.php` / `index.html`. Both the ZIP and the Git method need an empty folder the first time.
 
-## 2. Pull the code from GitHub
+## 2. Put the code on the server: ZIP upload (manual) **or** Git
+
+Choose **one** method and stick with it.
+
+### Option 1: ZIP upload (manual, no Git)
+
+**Make the ZIP** (on the developer's computer, in the project folder):
+
+```bash
+php bin/console package        # → dist/jersey-musium-<date>-<commit>.zip
+```
+
+The ZIP contains only what the server needs: app, website files, `database/install/install.sql`, and the protective `.htaccess` files. It never contains your secrets file, tests, docs, logs or uploaded images. Paths inside it are Linux-safe.
+
+> Don't build the ZIP with Windows *Send to → Compressed folder*: it can skip the `.htaccess` files and store `\` paths that break on Linux. Use `php bin/console package`.
+
+**First install:**
+1. **Turn off Git auto-deployment** if you set it up before (hPanel → *Advanced → Git* → delete the repository / auto-deploy), otherwise it may overwrite your files later.
+2. *File Manager* → open the website folder:
+   * main domain → `domains/example.com/public_html/`
+   * subdomain like **jerseymusium.cygnatrix.com** → `domains/cygnatrix.com/public_html/jerseymusium/`
+3. Delete everything inside it (it's only old code; your database is separate).
+4. **Upload** the ZIP into that folder → right-click it → **Extract** → extract **into the same folder**, not into a new sub-folder. Then delete the ZIP.
+5. Check: the folder now shows `app`, `bootstrap`, `public`, `storage`… and a `.htaccess` file.
+   * If `.htaccess` isn't visible, enable *Settings → Show hidden files*.
+   * If you only see one folder named like the ZIP, the files went one level too deep: move its contents up.
+
+**Updating later with a new ZIP:**
+1. Upload the new ZIP into the same folder → **Extract** → choose **overwrite / replace existing files**.
+2. Delete the ZIP.
+
+Your secrets file (outside this folder), uploaded product images (`public/uploads/`) and logs are not in the ZIP, so they are never overwritten. If the update notes mention a new database migration, import it in phpMyAdmin (step 5, "Future updates").
+
+### Option 2: Pull the code from GitHub
 
 hPanel → *Advanced → Git*:
 
@@ -221,11 +254,17 @@ Then in the store go to **Admin → Settings → Payments** and enable the gatew
 
 ## 9. Updating the site later
 
-1. Push changes to the `main` branch on GitHub.
-2. Click **Deploy** in hPanel → Git, or let the webhook do it.
-3. If the update contains a new file in `database/migrations/`, run `php bin/console migrate` (SSH or one-off cron).
+**ZIP method:**
+1. Run `php bin/console package`.
+2. Upload and extract the ZIP over the website folder, overwriting files (step 2, Option 1).
 
-Your `jersey-musium.env`, uploaded product images and logs are **not** in Git, so updates never overwrite them.
+**Git method:**
+1. Push to `main`.
+2. Click **Deploy** in hPanel → Git (or let the webhook do it).
+
+**Either way:** if the update contains a new file in `database/migrations/`, import it in phpMyAdmin (step 5, "Future updates") or run `php bin/console migrate` over SSH.
+
+Your `jersey-musium.env`, uploaded product images and logs are in neither the ZIP nor Git, so updates never overwrite them.
 
 ## Troubleshooting
 

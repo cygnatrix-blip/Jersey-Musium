@@ -205,6 +205,51 @@ switch ($cmd) {
         $out($fail ? "\n$fail blocking issue(s) – fix before going live." : "\nNo blocking issues.");
         exit($fail ? 1 : 0);
 
+    case 'package':
+        // Builds dist/jersey-musium-<date>-<commit>.zip for manual upload (Hostinger File Manager → Extract).
+        // Contains only what the server needs; never .env, tests, docs, dev tools, logs or uploaded images.
+        if (!class_exists(ZipArchive::class)) {
+            $out('PHP zip extension missing.');
+            exit(1);
+        }
+        $include = ['app', 'bootstrap', 'bin', 'config', 'database', 'public', 'routes', 'storage', '.htaccess', 'composer.json'];
+        $skip = [
+            '#^public/uploads/(?!\.htaccess$|\.gitkeep$)#',   // keep only the protective .htaccess in uploads
+            '#^storage/(logs|cache)/(?!\.gitkeep$)#',          // no logs / caches
+            '#(^|/)\.DS_Store$|(^|/)Thumbs\.db$#',
+        ];
+        $commit = trim((string) @shell_exec('git -C ' . escapeshellarg(BASE_PATH) . ' rev-parse --short HEAD 2>' . (DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null'))) ?: 'local';
+        $name = 'jersey-musium-' . date('Ymd-Hi') . '-' . $commit . '.zip';
+        @mkdir(BASE_PATH . '/dist', 0755, true);
+        $zipPath = BASE_PATH . '/dist/' . $name;
+        $zip = new ZipArchive();
+        $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $count = 0;
+        foreach ($include as $entry) {
+            $abs = BASE_PATH . '/' . $entry;
+            $files = is_dir($abs)
+                ? new RecursiveIteratorIterator(new RecursiveDirectoryIterator($abs, FilesystemIterator::SKIP_DOTS))
+                : [new SplFileInfo($abs)];
+            foreach ($files as $f) {
+                if (!$f->isFile()) {
+                    continue;
+                }
+                // forward slashes only: Windows-style "\" paths break extraction on Linux servers
+                $rel = ltrim(str_replace('\\', '/', substr($f->getPathname(), strlen(BASE_PATH))), '/');
+                foreach ($skip as $rx) {
+                    if (preg_match($rx, $rel)) {
+                        continue 2;
+                    }
+                }
+                $zip->addFile($f->getPathname(), $rel);
+                $count++;
+            }
+        }
+        $zip->setArchiveComment("Jersey Musium $commit – extract inside the website folder. Secrets file (jersey-musium.env) is NOT included by design.");
+        $zip->close();
+        $out("Wrote dist/$name ($count files, " . number_format(filesize($zipPath) / 1048576, 2) . ' MB)');
+        break;
+
     case 'key:generate':
         $out('APP_KEY=' . bin2hex(random_bytes(32)));
         break;

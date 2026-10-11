@@ -12,3 +12,4 @@
 .DS_Store
 Thumbs.db
 /tests/browser/node_modules/
+/dist/

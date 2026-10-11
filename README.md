@@ -38,6 +38,12 @@ php bin/console security:check                         # production configuratio
 composer audit                                         # dependency CVEs
 ```
 
+## Build an upload ZIP (manual deployment)
+
+```bash
+php bin/console package    # → dist/jersey-musium-<date>-<commit>.zip (no secrets, tests or docs inside)
+```
+
 ## Cron (production)
 
 ```
