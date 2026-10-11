@@ -31,7 +31,7 @@ Leave the payment keys empty and only Cash on Delivery is offered. Add Razorpay 
 
 ```bash
 php bin/console lint                                   # syntax of every PHP file
-vendor/bin/phpunit                                     # 95 unit + integration tests (separate DB jersey_musium_test)
+vendor/bin/phpunit                                     # 99 unit + integration tests (separate DB jersey_musium_test)
 php tests/smoke.php http://localhost:8000 <admin-email> <admin-password>   # 106 end-to-end + security checks (server must run with MAIL_DRIVER=log)
 cd tests/browser && npm install && node razorpay-checkout.js               # real Razorpay test-mode payment
 php bin/console security:check                         # production configuration audit

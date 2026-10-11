@@ -24,9 +24,12 @@ if (is_file(BASE_PATH . '/vendor/autoload.php')) {
     require BASE_PATH . '/app/helpers.php';
 }
 
-// Secrets file: prefer one OUTSIDE the web root (shared hosting: the project sits in public_html),
-// e.g. /home/u123/domains/example.com/jersey-musium.env, then fall back to the project's .env.
-$envFile = getenv('JM_ENV_FILE') ?: (is_file(dirname(BASE_PATH) . '/jersey-musium.env') ? dirname(BASE_PATH) . '/jersey-musium.env' : BASE_PATH . '/.env');
+// Secrets file: "jersey-musium.env" in one of the 4 folders ABOVE the project, preferring a copy that is
+// outside every public_html (i.e. not downloadable). Covers both layouts on shared hosting:
+//   main domain : /home/u1/domains/example.com/public_html            → …/example.com/jersey-musium.env
+//   subdomain   : /home/u1/domains/example.com/public_html/shop       → …/example.com/jersey-musium.env
+// Falls back to the project's own .env (local development). JM_ENV_FILE overrides everything.
+$envFile = getenv('JM_ENV_FILE') ?: App\Core\Env::locate(BASE_PATH);
 define('ENV_FILE', $envFile);
 App\Core\Env::load($envFile);
 

@@ -50,7 +50,14 @@ Click **Create**, then **Deploy**.
 
 ## 3. Create the secrets file (outside the website folder)
 
-*File Manager* → go **one level up** from `public_html` (to `domains/yourdomain.com/`) → *New file* → `jersey-musium.env`.
+*File Manager* → go to **`domains/yourdomain.com/`**, the folder that *contains* `public_html` → *New file* → `jersey-musium.env`.
+
+| Your site is… | Project folder | Put `jersey-musium.env` in |
+|---|---|---|
+| a main domain, e.g. `example.com` | `domains/example.com/public_html` | `domains/example.com/` |
+| a **subdomain inside another site's folder**, e.g. `shop.example.com` | `domains/example.com/public_html/shop` | `domains/example.com/` (**not** `public_html/`, which is the main website's public folder) |
+
+The app searches up to four folders above itself, and always prefers a copy that is outside every `public_html`.
 
 > **Keep the exact name `jersey-musium.env`. Do not rename it to `.env`.**
 > The app looks for this file name, one folder above `public_html`, and reads it automatically.

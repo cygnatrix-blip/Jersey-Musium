@@ -32,6 +32,44 @@ final class EnvTest extends TestCase
         $this->assertSame('dflt', Env::get('JMT_MISSING', 'dflt'));
     }
 
+    /** Builds a fake hosting tree under a temp dir and returns its root. */
+    private function tree(array $files): string
+    {
+        $root = str_replace('\\', '/', sys_get_temp_dir()) . '/jmenv_' . bin2hex(random_bytes(4));
+        foreach ($files as $f) {
+            @mkdir(dirname("$root/$f"), 0777, true);
+            str_ends_with($f, '/') ? @mkdir("$root/$f", 0777, true) : file_put_contents("$root/$f", 'X=1');
+        }
+        return $root;
+    }
+
+    public function testLocatesSecretsFileForSubdomainInsideMainSiteFolder(): void
+    {
+        // Real Hostinger layout of jerseymusium.cygnatrix.com: project in .../cygnatrix.com/public_html/jerseymusium
+        $root = $this->tree(['domains/cygnatrix.com/jersey-musium.env', 'domains/cygnatrix.com/public_html/jerseymusium/']);
+        $this->assertSame("$root/domains/cygnatrix.com/jersey-musium.env",
+            str_replace('\\', '/', Env::locate("$root/domains/cygnatrix.com/public_html/jerseymusium")));
+    }
+
+    public function testMainDomainLayout(): void
+    {
+        $root = $this->tree(['domains/example.com/jersey-musium.env', 'domains/example.com/public_html/']);
+        $this->assertSame("$root/domains/example.com/jersey-musium.env", str_replace('\\', '/', Env::locate("$root/domains/example.com/public_html")));
+    }
+
+    public function testPrefersCopyOutsidePublicHtml(): void
+    {
+        // A copy in the main site's public_html (downloadable!) must lose against one above public_html.
+        $root = $this->tree(['domains/x.com/public_html/jersey-musium.env', 'domains/x.com/jersey-musium.env', 'domains/x.com/public_html/shop/']);
+        $this->assertSame("$root/domains/x.com/jersey-musium.env", str_replace('\\', '/', Env::locate("$root/domains/x.com/public_html/shop")));
+    }
+
+    public function testFallsBackToProjectDotEnv(): void
+    {
+        $root = $this->tree(['site/project/']);
+        $this->assertSame("$root/site/project/.env", str_replace('\\', '/', Env::locate("$root/site/project")));
+    }
+
     public function testRealEnvironmentOverridesFile(): void
     {
         putenv('JMT_OVERRIDE=from-env');

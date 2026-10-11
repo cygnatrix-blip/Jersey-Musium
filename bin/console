@@ -181,10 +181,18 @@ switch ($cmd) {
         }
         $add(is_file(BASE_PATH . '/public/uploads/.htaccess') ? 'PASS' : 'FAIL', 'PHP execution disabled in /uploads');
         $add(!is_file(BASE_PATH . '/public/.env') ? 'PASS' : 'FAIL', 'No .env inside /public');
-        $insideWebRoot = str_starts_with(str_replace('\\', '/', realpath(ENV_FILE) ?: ENV_FILE), str_replace('\\', '/', BASE_PATH) . '/')
-            && preg_match('#/public_html(/|$)#', str_replace('\\', '/', BASE_PATH));
-        $add($insideWebRoot ? 'WARN' : 'PASS', 'Secrets file: ' . ENV_FILE . ($insideWebRoot
-            ? ' – inside public_html (blocked by .htaccess, but better moved one level up as jersey-musium.env)' : ''));
+        $envPath = str_replace('\\', '/', realpath(ENV_FILE) ?: ENV_FILE);
+        $inProject = str_starts_with($envPath, str_replace('\\', '/', BASE_PATH) . '/');
+        if (!is_file(ENV_FILE)) {
+            $add('FAIL', 'Secrets file not found – put jersey-musium.env in a folder above the project (outside public_html)');
+        } elseif (!$inProject && preg_match('#/public_html/#', $envPath)) {
+            // e.g. a subdomain in public_html/shop with the file in public_html/ → downloadable via the MAIN website!
+            $add('FAIL', 'Secrets file ' . ENV_FILE . ' sits in ANOTHER website\'s public folder and may be downloadable – move it above public_html');
+        } elseif ($inProject && preg_match('#/public_html(/|$)#', str_replace('\\', '/', BASE_PATH))) {
+            $add('WARN', 'Secrets file: ' . ENV_FILE . ' – inside public_html (blocked by .htaccess, but better moved above public_html as jersey-musium.env)');
+        } else {
+            $add('PASS', 'Secrets file: ' . ENV_FILE);
+        }
         $add(is_writable(BASE_PATH . '/storage/logs') ? 'PASS' : 'FAIL', 'storage/logs writable');
         $super = (int) db()->scalar("SELECT COUNT(*) FROM admins a JOIN roles r ON r.id = a.role_id WHERE r.slug = 'super_admin' AND a.status = 'active'");
         $add($super >= 1 ? 'PASS' : 'FAIL', "$super active Super Admin(s)");

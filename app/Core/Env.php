@@ -12,6 +12,23 @@ final class Env
 {
     private static array $values = [];
 
+    /**
+     * Find the secrets file: "jersey-musium.env" in one of the 4 folders above $basePath, preferring a copy
+     * that is outside every public_html (not downloadable). Falls back to "$basePath/.env".
+     */
+    public static function locate(string $basePath, string $name = 'jersey-musium.env'): string
+    {
+        $found = [];
+        $dir = dirname($basePath);
+        for ($i = 0; $i < 4 && $dir !== dirname($dir); $i++, $dir = dirname($dir)) {
+            if (@is_file($dir . '/' . $name)) { // @: folders outside open_basedir simply don't count
+                $found[] = $dir . '/' . $name;
+            }
+        }
+        $private = array_values(array_filter($found, static fn ($f) => !preg_match('#/public_html/#', str_replace('\\', '/', $f))));
+        return $private[0] ?? $found[0] ?? $basePath . '/.env';
+    }
+
     public static function load(string $path): void
     {
         if (!is_file($path)) {
