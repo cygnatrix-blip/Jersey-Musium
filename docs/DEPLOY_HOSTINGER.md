@@ -193,7 +193,11 @@ Hostinger runs PHP as your own user, so 755 is enough. **Never use 777.**
 
 The update notes will say when this is needed.
 
-> Demo products: the 24 demo jerseys with their images are only available through SSH (`seed --demo=1`), because their images are generated as files. On a live store you will add your own products anyway (Admin → Products).
+**Optional: demo products (to see the store filled before you add real stock)**
+1. Upload the 53 demo images. On your computer, take the folder `public/uploads/demo/`, created by `php bin/console demo:sql`, and upload its `.svg` files into the server folder `public_html/public/uploads/demo/`.
+2. phpMyAdmin → your database → **Import** → `database/install/demo-data.sql`.
+
+This adds 24 jerseys with sizes, stock and images, plus 5 homepage banners. Import it only once, after `install.sql`, and before you add your own products. Remove the demo items later in Admin → Products (*Archive*) and Admin → Offer banners.
 
 ### Option B: SSH (Premium/Business plans)
 

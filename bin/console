@@ -205,6 +205,56 @@ switch ($cmd) {
         $out($fail ? "\n$fail blocking issue(s) – fix before going live." : "\nNo blocking issues.");
         exit($fail ? 1 : 0);
 
+    case 'demo:sql':
+        // Builds database/install/demo-data.sql (24 demo jerseys + banners) for phpMyAdmin, and writes the
+        // matching images to public/uploads/demo/. Run against an EMPTY scratch database:
+        //   DB_DATABASE=jm_build php bin/console demo:sql
+        // Import AFTER install.sql. Upload public/uploads/demo/ to the server's public/uploads/demo/.
+        $pdo = db()->pdo();
+        if ((int) db()->scalar('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()') > 0 && empty($opts['force'])) {
+            $out('Refusing: the configured database is not empty. Point DB_DATABASE at an empty scratch DB (or --force=1 on a scratch DB).');
+            exit(1);
+        }
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        foreach ($pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN) as $t) {
+            $pdo->exec("DROP TABLE `$t`");
+        }
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        $files = glob(BASE_PATH . '/database/migrations/*.sql');
+        sort($files);
+        foreach ($files as $file) {
+            foreach (array_filter(array_map('trim', preg_split('/;\s*$/m', preg_replace('/^\s*--.*$/m', '', (string) file_get_contents($file))))) as $stmt) {
+                $pdo->exec($stmt);
+            }
+        }
+        $outBackup = $out;
+        $out = static fn () => null;
+        $opts = [];
+        require BASE_PATH . '/database/seeds/seed.php';          // base data (same ids as install.sql)
+        $opts = ['demo' => 1];
+        require BASE_PATH . '/database/seeds/seed.php';          // + demo catalog & banners (writes SVGs)
+        $out = $outBackup;
+        $sql = "-- =====================================================================\n"
+            . "-- Jersey Musium – DEMO catalog for phpMyAdmin (24 jerseys, sizes & stock, images, banners)\n"
+            . "-- Generated " . date('Y-m-d H:i') . " by `php bin/console demo:sql`.\n"
+            . "-- Import AFTER install.sql, into a store that has no products/banners yet.\n"
+            . "-- Images: upload public/uploads/demo/*.svg to the server folder public/uploads/demo/.\n"
+            . "-- Remove later: Admin → Products → Archive (or delete the rows).\n"
+            . "-- =====================================================================\n\nSET NAMES utf8mb4;\n\n";
+        foreach (['products', 'product_images', 'product_variants', 'inventory_movements', 'banners'] as $table) {
+            $sql .= "-- $table\n";
+            foreach (db()->select("SELECT * FROM `$table` ORDER BY id") as $row) {
+                $cols = implode(', ', array_map(fn ($c) => "`$c`", array_keys($row)));
+                $vals = implode(', ', array_map(fn ($v) => $v === null ? 'NULL' : (is_int($v) || is_float($v) ? (string) $v : $pdo->quote((string) $v)), $row));
+                $sql .= "INSERT INTO `$table` ($cols) VALUES ($vals);\n";
+            }
+            $sql .= "\n";
+        }
+        file_put_contents(BASE_PATH . '/database/install/demo-data.sql', $sql);
+        $imgs = count(glob(BASE_PATH . '/public/uploads/demo/*.svg'));
+        $out('Wrote database/install/demo-data.sql (' . number_format(strlen($sql)) . " bytes) and $imgs images in public/uploads/demo/.");
+        break;
+
     case 'package':
         // Builds dist/jersey-musium-<date>-<commit>.zip for manual upload (Hostinger File Manager → Extract).
         // Contains only what the server needs; never .env, tests, docs, dev tools, logs or uploaded images.
