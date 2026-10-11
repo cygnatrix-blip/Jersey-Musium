@@ -57,6 +57,63 @@ switch ($cmd) {
         require BASE_PATH . '/database/seeds/seed.php';
         break;
 
+    case 'install:sql':
+        // Builds database/install/install.sql for hosts without SSH (import once in phpMyAdmin).
+        // Run against an EMPTY scratch database, e.g.: DB_DATABASE=jm_build php bin/console install:sql
+        $pdo = db()->pdo();
+        if ((int) db()->scalar('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()') > 0 && empty($opts['force'])) {
+            $out('Refusing: the configured database is not empty. Point DB_DATABASE at an empty scratch DB (or pass --force=1 on a scratch DB).');
+            exit(1);
+        }
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        foreach ($pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN) as $t) {
+            $pdo->exec("DROP TABLE `$t`");
+        }
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        $files = glob(BASE_PATH . '/database/migrations/*.sql');
+        sort($files);
+        $sql = "-- =====================================================================\n"
+            . "-- Jersey Musium – complete database install for phpMyAdmin\n"
+            . "-- Generated " . date('Y-m-d H:i') . " by `php bin/console install:sql` – do not edit by hand.\n"
+            . "-- Import ONCE into an EMPTY database (phpMyAdmin → select database → Import).\n"
+            . "-- It never drops tables: on a non-empty database it stops at the first error.\n"
+            . "-- Contains: all tables + roles, categories, policy pages, coupons. No admin user\n"
+            . "-- (create it afterwards at https://yourdomain/setup?token=YOUR_SETUP_TOKEN).\n"
+            . "-- =====================================================================\n\n"
+            . "SET NAMES utf8mb4;\nSET time_zone = '+05:30';\n\n";
+        foreach ($files as $file) {
+            $body = (string) file_get_contents($file);
+            $sql .= "-- ---------------------------------------------------------------------\n-- " . basename($file) . "\n-- ---------------------------------------------------------------------\n" . trim($body) . "\n\n";
+            foreach (array_filter(array_map('trim', preg_split('/;\s*$/m', preg_replace('/^\s*--.*$/m', '', $body)))) as $stmt) {
+                $pdo->exec($stmt);
+            }
+        }
+        $sql .= "-- ---------------------------------------------------------------------\n-- Migration bookkeeping (so `bin/console migrate` knows these are applied)\n-- ---------------------------------------------------------------------\n"
+            . "CREATE TABLE IF NOT EXISTS migrations (name VARCHAR(190) PRIMARY KEY, ran_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB;\n";
+        foreach ($files as $file) {
+            $sql .= 'INSERT INTO migrations (name) VALUES (' . $pdo->quote(basename($file)) . ");\n";
+        }
+        $opts = [];
+        ob_start();
+        $outBackup = $out;
+        $out = static fn () => null;
+        require BASE_PATH . '/database/seeds/seed.php';
+        $out = $outBackup;
+        ob_end_clean();
+        $sql .= "\n-- ---------------------------------------------------------------------\n-- Starter data\n-- ---------------------------------------------------------------------\n";
+        foreach (['roles', 'categories', 'pages', 'coupons', 'settings'] as $table) {
+            $rows = db()->select("SELECT * FROM `$table` ORDER BY 1");
+            foreach ($rows as $row) {
+                $cols = implode(', ', array_map(fn ($c) => "`$c`", array_keys($row)));
+                $vals = implode(', ', array_map(fn ($v) => $v === null ? 'NULL' : (is_int($v) || is_float($v) ? (string) $v : $pdo->quote((string) $v)), $row));
+                $sql .= "INSERT INTO `$table` ($cols) VALUES ($vals);\n";
+            }
+        }
+        @mkdir(BASE_PATH . '/database/install', 0755, true);
+        file_put_contents(BASE_PATH . '/database/install/install.sql', $sql);
+        $out('Wrote database/install/install.sql (' . number_format(strlen($sql)) . ' bytes).');
+        break;
+
     case 'admin:create':
         $ask = function (string $q, bool $hidden = false) {
             fwrite(STDOUT, $q . ': ');

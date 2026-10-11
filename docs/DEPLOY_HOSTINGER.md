@@ -52,7 +52,15 @@ Click **Create**, then **Deploy**.
 
 *File Manager* → go **one level up** from `public_html` (to `domains/yourdomain.com/`) → *New file* → `jersey-musium.env`.
 
-Paste the template below and fill in your values. The app finds this file automatically; it is never reachable from the web.
+> **Keep the exact name `jersey-musium.env`. Do not rename it to `.env`.**
+> The app looks for this file name, one folder above `public_html`, and reads it automatically.
+> * A file called `.env` in that spot is **not** read.
+> * Hostinger's File Manager hides names starting with a dot, so `.env` is easy to lose.
+> * Being outside `public_html` means it can never be downloaded from the web.
+>
+> (A `.env` *inside* `public_html` also works and is blocked by `.htaccess`, but the outside location is safer.)
+
+Paste the template below and fill in your values. **Real passwords go only in this file on the server, never into files on GitHub.**
 
 ```ini
 APP_NAME="Jersey Musium"
@@ -60,7 +68,7 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://www.yourdomain.com
 APP_TIMEZONE=Asia/Kolkata
-APP_KEY=                       # step 5 generates this
+APP_KEY=                       # the /setup page (step 5) gives you this value
 
 DB_HOST=localhost
 DB_PORT=3306
@@ -96,6 +104,10 @@ MAIL_FROM_NAME="Jersey Musium"
 UPLOAD_MAX_MB=5
 ADMIN_2FA=true
 TRUST_CLOUDFLARE=false
+
+# One-time setup page (step 5). Any long random text (24+ characters, letters and numbers).
+# Delete this line after your admin account is created.
+SETUP_TOKEN=change-me-to-a-long-random-text-123
 ```
 
 > 🔒 Use a **new** Gmail app password and **new** Razorpay keys here. The ones shared during development should be revoked.
@@ -110,7 +122,42 @@ Hostinger runs PHP as your own user, so 755 is enough. **Never use 777.**
 
 ## 5. Install the database & create your admin login
 
-**With SSH** (hPanel → *Advanced → SSH Access* → enable, then connect with the shown command or the hPanel *Browser terminal*):
+### Option A: phpMyAdmin (no SSH needed, recommended)
+
+**5.1 Import the database (once)**
+1. On your computer, download **`database/install/install.sql`** from GitHub: open the file → *Download raw file*.
+2. hPanel → *Databases → phpMyAdmin* → **Enter phpMyAdmin** next to your database.
+3. In phpMyAdmin, click your database name in the **left** column (e.g. `u123456789_jersey`). It must be **empty**, with no tables.
+4. Top menu → **Import** → *Choose file* → select `install.sql` → leave everything else as is (format **SQL**, character set **utf-8**) → **Import** (or *Go*).
+5. You should see a green success message and **35 tables** in the left column, including `admins`, `products`, `orders`, `roles` and `migrations`.
+
+> ✅ This one file contains **all three migrations** (001 tables, 002 GST invoices, 003 email codes) and the starter data: 5 staff roles, 15 categories, 6 policy pages and 2 coupons. Import **only this file**. Do *not* import the separate files in `database/migrations/`.
+>
+> ⚠️ Import it **once**. If you import it again by mistake, phpMyAdmin stops with "Table 'users' already exists". Nothing is deleted, so just ignore it.
+
+**5.2 Create your Super Admin login (one-time setup page)**
+1. Make sure `SETUP_TOKEN=` in `jersey-musium.env` has a long random value (step 3).
+2. Open **`https://www.yourdomain.com/setup?token=YOUR_SETUP_TOKEN`** in your browser.
+3. **First time:** the page says *"APP_KEY is not set"* and shows a long key.
+   1. Copy it into `APP_KEY=` in `jersey-musium.env` and save.
+   2. Click **Check again**.
+4. Fill in your name, the email that should receive admin sign-in codes, and a password (12+ characters, letters and numbers) → **Create Super Admin**.
+5. You land on `/admin/login`. Sign in; a 6-digit code arrives by email.
+6. **Delete the `SETUP_TOKEN=` line** from `jersey-musium.env`. The page already refuses to work once an admin exists, but tidy is safer.
+
+> The setup page shows "Not found" if the token is missing or wrong, or if any admin already exists. Nobody else can use it.
+
+**Future updates (phpMyAdmin):** if a later update adds a new file such as `database/migrations/004_something.sql`:
+1. Import **just that new file** in phpMyAdmin.
+2. In the *SQL* tab, run `INSERT INTO migrations (name) VALUES ('004_something.sql');` so the app knows it's done.
+
+The update notes will say when this is needed.
+
+> Demo products: the 24 demo jerseys with their images are only available through SSH (`seed --demo=1`), because their images are generated as files. On a live store you will add your own products anyway (Admin → Products).
+
+### Option B: SSH (Premium/Business plans)
+
+hPanel → *Advanced → SSH Access* → enable, then connect with the shown command or the hPanel *Browser terminal*:
 
 ```bash
 cd ~/domains/yourdomain.com/public_html
@@ -123,12 +170,7 @@ php bin/console security:check        # must say "No blocking issues"
 
 Want the 24 demo jerseys and banners to see the site filled? Run `php bin/console seed --demo=1` instead. Archive them later in Admin → Products.
 
-**Without SSH (Single plan):** use *Advanced → Cron Jobs* to run each command **once**.
-1. Add a cron job with the command `php /home/u123456789/domains/yourdomain.com/public_html/bin/console migrate`, set to every minute.
-2. Wait one minute, then delete that job.
-3. Repeat for `seed`.
-4. For `admin:create`, use `admin:create --name="Your Name" --email=you@domain.com --password=YourLongPassword123`.
-5. For the app key, generate one locally (`php -r "echo bin2hex(random_bytes(32));"`) and paste it into the env file.
+(With SSH you don't need `install.sql` or the setup page. Use one option or the other, not both.)
 
 ## 6. Scheduled jobs (Cron)
 
@@ -187,4 +229,6 @@ Your `jersey-musium.env`, uploaded product images and logs are **not** in Git, s
 | Emails not arriving | Check the `Mail failed` lines in the app log. Gmail needs an **app password** (Google Account → Security → 2-Step Verification → App passwords). If Gmail is blocked or limited, create a mailbox in hPanel → *Emails* and use `smtp.hostinger.com`, port `465`, `MAIL_ENCRYPTION=ssl` |
 | CSS/images missing, pages show "/public/" in URL | The `.htaccess` in `public_html` is missing. Redeploy from Git (dotfiles are included) |
 | Uploaded product images fail | `public/uploads` permission 755; the image is under 5 MB and a JPG, PNG or WEBP |
+| `/setup` says "Not found" | The `SETUP_TOKEN` in the URL must match the secrets file exactly (24+ characters), the file must be named `jersey-musium.env` one level above `public_html`, and no admin may exist yet. If you already created an admin, just sign in at `/admin` |
+| phpMyAdmin import error "Table … already exists" | The database was not empty, so the import stopped without changing anything. Use an empty database, or skip the import if the tables are already there |
 | Payments stay "pending" | Webhook URL or secret mismatch: check Razorpay → Webhooks → *Logs* |

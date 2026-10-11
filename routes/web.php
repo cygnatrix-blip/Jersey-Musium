@@ -14,6 +14,7 @@ use App\Controllers\PageController;
 use App\Controllers\PaymentController;
 use App\Controllers\ProductController;
 use App\Controllers\SeoController;
+use App\Controllers\SetupController;
 use App\Controllers\VerifyEmailController;
 use App\Controllers\WishlistController;
 
@@ -93,3 +94,7 @@ $router->post('/track-order', [PageController::class, 'track'], ['throttle:10,30
 $router->post('/newsletter', [PageController::class, 'newsletter'], ['throttle:5,600']);
 $router->get('/sitemap.xml', [SeoController::class, 'sitemap']);
 $router->get('/robots.txt', [SeoController::class, 'robots']);
+
+// ---- One-time installer (no-SSH hosting): create first Super Admin; 404 unless SETUP_TOKEN matches and no admin exists ----
+$router->get('/setup', [SetupController::class, 'show']);
+$router->post('/setup', [SetupController::class, 'store'], ['throttle:5,600']);

@@ -345,6 +345,8 @@ $g2->get('/');
 check(str_contains(strtolower($g2->headers['set-cookie'] ?? ''), 'httponly') && str_contains(strtolower($g2->headers['set-cookie'] ?? ''), 'samesite=lax'), 'session cookie HttpOnly + SameSite=Lax');
 check($g->get('/../.env')['code'] !== 200 || !str_contains($g->last, 'DB_PASSWORD'), '.env not reachable over HTTP');
 check($g->get('/storage/logs/')['code'] !== 200, 'logs not reachable over HTTP');
+check($g->get('/setup')['code'] === 404 && $g->get('/setup?token=' . str_repeat('x', 30))['code'] === 404, 'one-time /setup is hidden (no/invalid token, admin exists)');
+check($g->req('POST', '/setup', ['_token' => $g->token('/login'), 'token' => str_repeat('x', 30), 'name' => 'Evil', 'email' => 'e@x.com', 'password' => 'StrongPass2026', 'password_confirmation' => 'StrongPass2026'])['code'] === 404, 'cannot create an admin through /setup');
 
 echo PHP_EOL . "$pass passed, $fail failed" . PHP_EOL;
 exit($fail ? 1 : 0);

@@ -57,7 +57,7 @@ final class SecurityHeaders
             $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
         // Personal / transactional pages must never be stored by browsers or shared caches.
-        foreach (['/admin', '/account', '/checkout', '/cart', '/order/', '/payment/', '/login', '/register', '/reset-password', '/forgot-password', '/wishlist', '/track-order'] as $prefix) {
+        foreach (['/admin', '/account', '/checkout', '/cart', '/order/', '/payment/', '/login', '/register', '/reset-password', '/forgot-password', '/wishlist', '/track-order', '/setup', '/verify-email'] as $prefix) {
             if (str_starts_with($request->path(), $prefix)) {
                 $response->header('Cache-Control', 'no-store, private');
                 break;
