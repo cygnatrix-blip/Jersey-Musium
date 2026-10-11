@@ -1,0 +1,256 @@
+/* =====================================================================
+   Jersey Musium – "Kick-off" intro loader
+   Timeline (ms):  0 lights on · 300 players run in · 1250 IMPACT (flash, rings,
+   turf burst, shake) · 1350 wordmark slams in · ≥2600 & page loaded → ball kicked
+   at camera → reveal.  Ball centre in the photo = 48.6% x / 85.8% y.
+   ===================================================================== */
+.jm-loader {
+    --bx: 48.6%;
+    --by: 85.8%;
+    --red: #ff2d55;
+    --ink: #05070d;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow: hidden;
+    background: var(--ink);
+    color: #fff;
+    font-family: "Barlow Condensed", "Inter", system-ui, sans-serif;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+    /* Safety net: if JS never runs, fade out by itself */
+    animation: jmAutoHide .6s ease 7s forwards;
+}
+@keyframes jmAutoHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+/* blurred full-bleed copy of the photo fills the letterbox */
+.jm-backdrop {
+    position: absolute; inset: -40px;
+    background: var(--jm-img-sm) center / cover no-repeat;
+    filter: blur(28px) saturate(1.2) brightness(.32);
+    transform: scale(1.1);
+    opacity: 0;
+    animation: jmFade 1.2s ease .2s forwards;
+}
+@keyframes jmFade { to { opacity: 1; } }
+
+/* stadium floodlights */
+.jm-lights { position: absolute; inset: 0; pointer-events: none; z-index: 3; mix-blend-mode: screen; }
+.jm-lights i {
+    position: absolute; top: -30%; width: 34vmax; height: 120vmax;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.55), rgba(180,210,255,.12) 35%, transparent 65%);
+    transform-origin: 50% 0; opacity: 0;
+    animation: jmFlicker .7s steps(1, end) forwards, jmSway 6s ease-in-out 1s infinite alternate;
+    translate: calc(var(--mx, 0) * -18px) 0;
+}
+.jm-lights i:nth-child(1) { left: -6%;  rotate: -24deg; animation-delay: 0s, 1s; }
+.jm-lights i:nth-child(2) { left: 18%;  rotate: -10deg; animation-delay: .12s, 1.2s; }
+.jm-lights i:nth-child(3) { right: 18%; rotate: 10deg;  animation-delay: .2s, 1.1s; }
+.jm-lights i:nth-child(4) { right: -6%; rotate: 24deg;  animation-delay: .05s, 1.3s; }
+@keyframes jmFlicker { 0% {opacity:0} 20% {opacity:.9} 30% {opacity:.15} 45% {opacity:.8} 60% {opacity:.3} 100% {opacity:.55} }
+@keyframes jmSway { to { transform: rotate(4deg); } }
+
+/* cinematic 3:2 frame, always shows the full photo */
+.jm-frame {
+    position: absolute; left: 50%; top: 50%;
+    width: min(100vw, 150vh); aspect-ratio: 3 / 2;
+    translate: -50% -50%;
+    z-index: 2;
+    transform-origin: var(--bx) var(--by);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    animation: jmShake .5s cubic-bezier(.36,.07,.19,.97) 1.25s both, jmPush 3.4s ease-out 1.3s forwards;
+}
+@media (max-aspect-ratio: 1/1) {
+    .jm-frame {
+        top: 46%;
+        -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
+                mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
+    }
+}
+@keyframes jmShake {
+    10%, 90% { translate: calc(-50% - 2px) -50%; }
+    20%, 80% { translate: calc(-50% + 5px) calc(-50% + 2px); }
+    30%, 50%, 70% { translate: calc(-50% - 9px) calc(-50% - 3px); }
+    40%, 60% { translate: calc(-50% + 9px) calc(-50% + 3px); }
+    100% { translate: -50% -50%; }
+}
+@keyframes jmPush { from { scale: 1; } to { scale: 1.07; } }
+
+.jm-tilt {
+    position: absolute; inset: 0;
+    transform: perspective(1400px) rotateY(calc(var(--mx, 0) * 5deg)) rotateX(calc(var(--my, 0) * -4deg));
+    transform-style: preserve-3d;
+    transition: transform .25s ease-out;
+}
+
+/* the two players */
+.jm-half {
+    position: absolute; inset: 0;
+    background: var(--jm-img-sm) 0 0 / 100% 100% no-repeat;
+    will-change: transform, filter, opacity;
+}
+.jm-half--l { clip-path: inset(0 calc(100% - var(--bx)) 0 0); animation: jmInL .95s cubic-bezier(.16,.84,.24,1) .3s both; }
+.jm-half--r { clip-path: inset(0 0 0 var(--bx));              animation: jmInR .95s cubic-bezier(.16,.84,.24,1) .3s both; }
+@media (min-width: 768px) {
+    .jm-half, .jm-backdrop { background-image: var(--jm-img-lg); }
+}
+@keyframes jmInL {
+    from { transform: translateX(-62%) scale(1.14); filter: blur(12px) brightness(.35) saturate(.6); opacity: 0; }
+    55%  { filter: blur(3px) brightness(1.15); opacity: 1; }
+    to   { transform: none; filter: none; opacity: 1; }
+}
+@keyframes jmInR {
+    from { transform: translateX(62%) scale(1.14); filter: blur(12px) brightness(.35) saturate(.6); opacity: 0; }
+    55%  { filter: blur(3px) brightness(1.15); opacity: 1; }
+    to   { transform: none; filter: none; opacity: 1; }
+}
+
+/* energy line between the halves until they collide */
+.jm-seam {
+    position: absolute; top: 0; bottom: 0; left: var(--bx); width: 3px; translate: -50% 0;
+    background: linear-gradient(transparent, rgba(255,255,255,.95) 70%, var(--red) 86%, transparent);
+    box-shadow: 0 0 24px 6px rgba(255,45,85,.55);
+    opacity: 0; animation: jmSeam 1s ease .3s forwards;
+}
+@keyframes jmSeam { 0% {opacity:0; scale: 1 0} 60% {opacity:1; scale: 1 1} 95% {opacity:1} 100% {opacity:0} }
+
+.jm-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+        radial-gradient(ellipse 60% 55% at var(--bx) var(--by), transparent 30%, rgba(5,7,13,.55) 100%),
+        linear-gradient(180deg, rgba(5,7,13,.55), transparent 30%, transparent 75%, rgba(5,7,13,.7));
+}
+
+/* shockwave rings at the ball */
+.jm-impact { position: absolute; left: var(--bx); top: var(--by); width: 0; height: 0; pointer-events: none; }
+.jm-impact i {
+    position: absolute; left: 0; top: 0; width: 12vmin; height: 12vmin; margin: -6vmin 0 0 -6vmin;
+    border-radius: 50%; border: 3px solid rgba(255,255,255,.9);
+    box-shadow: 0 0 30px rgba(255,45,85,.8), inset 0 0 20px rgba(255,255,255,.5);
+    opacity: 0; scale: .2;
+    animation: jmRing .9s cubic-bezier(.1,.7,.2,1) 1.25s forwards;
+}
+.jm-impact i:nth-child(2) { animation-delay: 1.37s; border-color: rgba(255,45,85,.9); }
+.jm-impact i:nth-child(3) { animation-delay: 1.5s;  border-width: 1px; }
+.jm-impact.is-kick i { animation: jmRing .8s cubic-bezier(.1,.7,.2,1) forwards; }
+.jm-impact.is-kick i:nth-child(2) { animation-delay: .1s; }
+.jm-impact.is-kick i:nth-child(3) { animation-delay: .2s; }
+@keyframes jmRing { 0% { opacity: 1; scale: .2; } 100% { opacity: 0; scale: 5.5; } }
+
+.jm-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.jm-ballhit {
+    position: absolute; left: var(--bx); top: var(--by); width: 14%; aspect-ratio: 1; translate: -50% -50%;
+    border: 0; border-radius: 50%; background: transparent; cursor: pointer; z-index: 5;
+}
+.jm-ballhit::after {
+    content: ""; position: absolute; inset: 18%; border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.65), 0 0 28px 6px rgba(255,45,85,.45);
+    opacity: 0; animation: jmPulse 1.6s ease-in-out 2.2s infinite;
+}
+@keyframes jmPulse { 0%,100% { opacity: 0; scale: .9; } 50% { opacity: 1; scale: 1.08; } }
+
+.jm-flash {
+    position: absolute; inset: 0; z-index: 6; pointer-events: none;
+    background: radial-gradient(circle at 50% 70%, #fff, rgba(255,240,245,.6) 40%, transparent 75%);
+    opacity: 0; animation: jmFlash .5s ease-out 1.22s;
+}
+@keyframes jmFlash { 0% {opacity:0} 15% {opacity:.9} 100% {opacity:0} }
+
+/* wordmark */
+.jm-copy {
+    position: absolute; left: 50%; top: clamp(16px, 6vh, 64px); translate: -50% 0; z-index: 7;
+    text-align: center; width: min(92vw, 900px); pointer-events: none;
+    transform: translate(calc(var(--mx, 0) * -10px), calc(var(--my, 0) * -6px));
+    transition: transform .3s ease-out;
+}
+.jm-kicker {
+    margin: 0 0 .4rem; font: 600 clamp(11px, 1.3vw, 14px)/1 "Inter", sans-serif; letter-spacing: .32em; text-transform: uppercase;
+    color: rgba(255,255,255,.75); opacity: 0; animation: jmFade .6s ease .25s forwards;
+    display: inline-flex; align-items: center; gap: .6em;
+}
+.jm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 0 rgba(255,45,85,.7); animation: jmLive 1.4s infinite; }
+@keyframes jmLive { 70% { box-shadow: 0 0 0 10px rgba(255,45,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0); } }
+
+.jm-word {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 0 .28em;
+    font-weight: 800; font-style: italic; text-transform: uppercase; line-height: .9;
+    font-size: clamp(44px, 9vw, 128px); letter-spacing: .01em;
+    text-shadow: 0 6px 30px rgba(0,0,0,.55);
+}
+.jm-w b { display: inline-block; font-weight: inherit; opacity: 0; animation: jmSlam .55s cubic-bezier(.2,1.4,.4,1) calc(1.35s + var(--i) * 45ms) forwards; }
+.jm-w--accent b {
+    background: linear-gradient(100deg, #ff2d55 20%, #ffd166 45%, #ff2d55 70%);
+    background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: jmSlam .55s cubic-bezier(.2,1.4,.4,1) calc(1.35s + var(--i) * 45ms) forwards, jmShine 2.4s linear 2.1s infinite;
+    text-shadow: none; filter: drop-shadow(0 6px 24px rgba(255,45,85,.45));
+}
+@keyframes jmSlam {
+    from { opacity: 0; transform: translateY(.45em) skewX(-14deg) scale(1.7); filter: blur(8px); }
+    to   { opacity: 1; transform: none; filter: none; }
+}
+@keyframes jmShine { from { background-position: 100% 0; } to { background-position: -200% 0; } }
+.jm-tag {
+    margin: .5rem 0 0; font: 500 clamp(14px, 1.8vw, 20px)/1.2 "Inter", sans-serif; letter-spacing: .04em; color: rgba(255,255,255,.85);
+    opacity: 0; animation: jmFade .8s ease 2s forwards;
+}
+
+/* progress HUD */
+.jm-hud {
+    position: absolute; left: 50%; bottom: clamp(16px, 5vh, 48px); translate: -50% 0; z-index: 7;
+    width: min(86vw, 440px); opacity: 0; animation: jmFade .6s ease .5s forwards;
+    font-family: "Inter", sans-serif;
+}
+.jm-progress { height: 4px; border-radius: 4px; background: rgba(255,255,255,.18); overflow: hidden; }
+.jm-progress span {
+    display: block; height: 100%; width: 0; border-radius: inherit;
+    background: linear-gradient(90deg, #ff2d55, #ffd166);
+    box-shadow: 0 0 14px rgba(255,45,85,.8);
+    transition: width .2s linear;
+}
+.jm-meta { display: flex; justify-content: space-between; gap: 1rem; margin-top: .55rem; font-size: 12px; letter-spacing: .06em; color: rgba(255,255,255,.7); }
+.jm-meta #jm-pct { font-variant-numeric: tabular-nums; font-weight: 700; color: #fff; min-width: 3.5ch; }
+.jm-kicks { min-width: 3.5ch; text-align: right; color: #ffd166; font-weight: 700; }
+
+.jm-skip {
+    position: absolute; right: clamp(12px, 3vw, 32px); top: clamp(12px, 3vh, 28px); z-index: 8;
+    display: inline-flex; align-items: center; gap: .4rem; padding: .55rem .95rem;
+    font: 600 13px/1 "Inter", sans-serif; color: #fff; letter-spacing: .02em;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); border-radius: 999px;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); cursor: pointer;
+    opacity: 0; animation: jmFade .4s ease .8s forwards;
+    transition: background .2s;
+}
+.jm-skip:hover, .jm-skip:focus-visible { background: rgba(255,255,255,.22); outline: none; }
+@media (max-aspect-ratio: 1/1) {
+    .jm-copy { top: clamp(24px, 10vh, 120px); }
+}
+
+/* exit: the ball is kicked straight at the camera */
+.jm-kickball {
+    position: fixed; left: var(--kx, 50%); top: var(--ky, 80%); width: var(--ks, 80px); height: var(--ks, 80px);
+    translate: -50% -50%; z-index: 10; opacity: 0; pointer-events: none;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,.6));
+}
+.jm-loader.is-leaving { animation: jmOut .45s ease .62s forwards; pointer-events: none; }
+.jm-loader.is-leaving .jm-kickball { animation: jmKick .8s cubic-bezier(.55,0,.8,.2) forwards; }
+.jm-loader.is-leaving .jm-copy,
+.jm-loader.is-leaving .jm-hud,
+.jm-loader.is-leaving .jm-skip { opacity: 0 !important; transition: opacity .25s; animation: none; }
+@keyframes jmKick {
+    0%   { opacity: 1; transform: scale(1) rotate(0); }
+    100% { opacity: 1; transform: scale(34) rotate(600deg); }
+}
+@keyframes jmOut { to { opacity: 0; visibility: hidden; } }
+
+html.jm-lock, html.jm-lock body { overflow: hidden; }
+
+/* accessibility: honour reduced-motion – calm cross-fade only */
+@media (prefers-reduced-motion: reduce) {
+    .jm-loader *, .jm-loader *::before, .jm-loader *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition: none !important; }
+    .jm-frame { animation: none; }
+    .jm-impact, .jm-seam, .jm-flash, .jm-fx, .jm-kickball, .jm-hint { display: none; }
+    .jm-loader.is-leaving { animation: jmOut .3s ease forwards !important; }
+}

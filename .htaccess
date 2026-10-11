@@ -1,0 +1,25 @@
+# ----------------------------------------------------------------------------
+# Jersey Musium – project-root rules (Hostinger shared hosting / any Apache or LiteSpeed).
+# On shared plans the whole project lives in public_html; this file makes sure ONLY the
+# /public folder is reachable from the web and routes every request into it.
+# (If your document root already points at /public, this file is simply never used.)
+# ----------------------------------------------------------------------------
+Options -Indexes -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Never serve source code, configuration, logs, tests, docs, dependencies or VCS data.
+    RewriteRule ^(app|bootstrap|config|database|routes|storage|bin|tests|docs|vendor|node_modules)(/|$) - [F,L]
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+    RewriteRule ^(composer\.(json|lock)|phpunit\.xml|README\.md|.*\.(env|sql|log|md|lock|dist))$ - [F,L]
+
+    # Everything else is served from /public (front controller lives there).
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Defence in depth if mod_rewrite is ever disabled
+<FilesMatch "^\.|\.(env|sql|log|md|lock)$|^(composer\.json|phpunit\.xml)$">
+    Require all denied
+</FilesMatch>

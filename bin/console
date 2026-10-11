@@ -1,0 +1,167 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Jersey Musium CLI
+ *   php bin/console migrate            Run pending SQL migrations
+ *   php bin/console seed               Seed roles, categories, CMS pages, demo catalog & coupons
+ *   php bin/console admin:create       Create a Super Admin (interactive or --email= --name= --password=)
+ *   php bin/console orders:expire      Cancel unpaid online orders & release stock   (cron: every 5 min)
+ *   php bin/console cleanup            Purge expired rate limits, resets, stale guest carts (cron: daily)
+ *   php bin/console key:generate       Print a new APP_KEY
+ *   php bin/console lint               php -l every PHP file
+ */
+
+if (PHP_SAPI !== 'cli') {
+    exit(1);
+}
+
+require dirname(__DIR__) . '/bootstrap/app.php';
+
+$cmd = $argv[1] ?? 'help';
+$opts = [];
+foreach (array_slice($argv, 2) as $arg) {
+    if (preg_match('/^--([\w-]+)=(.*)$/', $arg, $m)) {
+        $opts[$m[1]] = $m[2];
+    }
+}
+$out = fn (string $s) => fwrite(STDOUT, $s . PHP_EOL);
+
+switch ($cmd) {
+    case 'migrate':
+        $pdo = db()->pdo();
+        $pdo->exec('CREATE TABLE IF NOT EXISTS migrations (name VARCHAR(190) PRIMARY KEY, ran_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
+        $done = array_column(db()->select('SELECT name FROM migrations'), 'name');
+        $files = glob(BASE_PATH . '/database/migrations/*.sql');
+        sort($files);
+        $ran = 0;
+        foreach ($files as $file) {
+            $name = basename($file);
+            if (in_array($name, $done, true)) {
+                continue;
+            }
+            $sql = preg_replace('/^\s*--.*$/m', '', (string) file_get_contents($file));
+            foreach (array_filter(array_map('trim', preg_split('/;\s*$/m', $sql))) as $stmt) {
+                $pdo->exec($stmt);
+            }
+            db()->insert('migrations', ['name' => $name]);
+            $out("  migrated  $name");
+            $ran++;
+        }
+        $out($ran ? "Done ($ran migration(s))." : 'Nothing to migrate.');
+        break;
+
+    case 'seed':
+        require BASE_PATH . '/database/seeds/seed.php';
+        break;
+
+    case 'admin:create':
+        $ask = function (string $q, bool $hidden = false) {
+            fwrite(STDOUT, $q . ': ');
+            if ($hidden && DIRECTORY_SEPARATOR === '/') {
+                system('stty -echo');
+                $v = trim((string) fgets(STDIN));
+                system('stty echo');
+                fwrite(STDOUT, PHP_EOL);
+                return $v;
+            }
+            return trim((string) fgets(STDIN));
+        };
+        $name = $opts['name'] ?? $ask('Name');
+        $email = strtolower($opts['email'] ?? $ask('Email'));
+        $pass = $opts['password'] ?? $ask('Password (min 12 chars)', true);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($pass) < 12) {
+            $out('Invalid email or password too short.');
+            exit(1);
+        }
+        $roleId = db()->scalar("SELECT id FROM roles WHERE slug = 'super_admin'");
+        if (!$roleId) {
+            $out('Run `php bin/console seed` first (roles missing).');
+            exit(1);
+        }
+        db()->execute(
+            'INSERT INTO admins (role_id, name, email, password_hash) VALUES (:r, :n, :e, :p)
+             ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash), role_id = VALUES(role_id), status = \'active\'',
+            ['r' => $roleId, 'n' => $name, 'e' => $email, 'p' => password_hash($pass, PASSWORD_DEFAULT)]
+        );
+        $out("Super admin $email ready. Sign in at " . url('/admin/login'));
+        break;
+
+    case 'orders:expire':
+        $n = App\Services\OrderService::expirePendingPayments();
+        $out("Expired $n unpaid order(s).");
+        break;
+
+    case 'cleanup':
+        $a = db()->execute('DELETE FROM rate_limits WHERE reset_at < :t', ['t' => time()]);
+        $b = db()->execute('DELETE FROM password_resets WHERE expires_at < NOW()');
+        $c = db()->execute('DELETE FROM carts WHERE user_id IS NULL AND updated_at < NOW() - INTERVAL 30 DAY');
+        $out("Removed $a rate-limit rows, $b expired resets, $c stale guest carts.");
+        break;
+
+    case 'security:check':
+        // Pre-launch configuration audit. Exit code 1 if any FAIL.
+        $checks = [];
+        $add = function (string $level, string $msg) use (&$checks) { $checks[] = [$level, $msg]; };
+        $prod = config('app.env') === 'production';
+        $add($prod ? 'PASS' : 'WARN', 'APP_ENV=' . config('app.env') . ($prod ? '' : ' (set to production on the live server)'));
+        $add(config('app.debug') ? ($prod ? 'FAIL' : 'WARN') : 'PASS', 'APP_DEBUG is ' . (config('app.debug') ? 'ON – stack traces would be shown to visitors' : 'off'));
+        $add(strlen((string) config('app.key')) >= 32 ? 'PASS' : 'FAIL', 'APP_KEY ' . (strlen((string) config('app.key')) >= 32 ? 'set' : 'missing – run key:generate'));
+        $add(str_starts_with(config('app.url'), 'https://') ? 'PASS' : ($prod ? 'FAIL' : 'WARN'), 'APP_URL uses ' . (str_starts_with(config('app.url'), 'https://') ? 'HTTPS' : 'plain HTTP'));
+        $add(config('app.session.secure') ? 'PASS' : ($prod ? 'FAIL' : 'WARN'), 'SESSION_SECURE ' . (config('app.session.secure') ? 'on' : 'off'));
+        $add(config('app.admin_2fa') ? 'PASS' : 'WARN', 'Admin two-step verification ' . (config('app.admin_2fa') ? 'on' : 'OFF'));
+        $add(config('mail.driver') === 'smtp' ? 'PASS' : ($prod ? 'FAIL' : 'WARN'), 'MAIL_DRIVER=' . config('mail.driver') . ' (customers & admin OTP need real email)');
+        $rz = App\Services\PaymentService::gateway('razorpay')->isConfigured();
+        if ($rz) {
+            $live = str_starts_with((string) config('payment.razorpay.key_id'), 'rzp_live_');
+            $add($live || !$prod ? 'PASS' : 'FAIL', 'Razorpay keys: ' . ($live ? 'LIVE' : 'TEST') . ' mode');
+            $add(config('payment.razorpay.webhook_secret') ? 'PASS' : 'FAIL', 'RAZORPAY_WEBHOOK_SECRET ' . (config('payment.razorpay.webhook_secret') ? 'set' : 'missing – payments may be lost if the browser closes'));
+        }
+        if (App\Services\PaymentService::gateway('cashfree')->isConfigured()) {
+            $add(config('payment.cashfree.env') === 'production' || !$prod ? 'PASS' : 'FAIL', 'Cashfree environment: ' . config('payment.cashfree.env'));
+        }
+        $add(is_file(BASE_PATH . '/public/uploads/.htaccess') ? 'PASS' : 'FAIL', 'PHP execution disabled in /uploads');
+        $add(!is_file(BASE_PATH . '/public/.env') ? 'PASS' : 'FAIL', 'No .env inside /public');
+        $insideWebRoot = str_starts_with(str_replace('\\', '/', realpath(ENV_FILE) ?: ENV_FILE), str_replace('\\', '/', BASE_PATH) . '/')
+            && preg_match('#/public_html(/|$)#', str_replace('\\', '/', BASE_PATH));
+        $add($insideWebRoot ? 'WARN' : 'PASS', 'Secrets file: ' . ENV_FILE . ($insideWebRoot
+            ? ' – inside public_html (blocked by .htaccess, but better moved one level up as jersey-musium.env)' : ''));
+        $add(is_writable(BASE_PATH . '/storage/logs') ? 'PASS' : 'FAIL', 'storage/logs writable');
+        $super = (int) db()->scalar("SELECT COUNT(*) FROM admins a JOIN roles r ON r.id = a.role_id WHERE r.slug = 'super_admin' AND a.status = 'active'");
+        $add($super >= 1 ? 'PASS' : 'FAIL', "$super active Super Admin(s)");
+        $add(setting('store_gstin') ? 'PASS' : 'WARN', 'GSTIN ' . (setting('store_gstin') ? 'configured' : 'not set (Admin → Settings) – required on tax invoices'));
+        $fail = 0;
+        foreach ($checks as [$lvl, $msg]) {
+            $fail += $lvl === 'FAIL';
+            $out(sprintf('  [%s] %s', $lvl, $msg));
+        }
+        $out($fail ? "\n$fail blocking issue(s) – fix before going live." : "\nNo blocking issues.");
+        exit($fail ? 1 : 0);
+
+    case 'key:generate':
+        $out('APP_KEY=' . bin2hex(random_bytes(32)));
+        break;
+
+    case 'lint':
+        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(BASE_PATH, FilesystemIterator::SKIP_DOTS));
+        $bad = 0;
+        foreach ($it as $f) {
+            $p = $f->getPathname();
+            if ($f->getExtension() !== 'php' || str_contains($p, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+            exec(escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($p) . ' 2>&1', $o, $code);
+            if ($code !== 0) {
+                $bad++;
+                $out(implode("\n", $o));
+            }
+            $o = [];
+        }
+        $out($bad ? "$bad file(s) with errors." : 'All PHP files OK.');
+        exit($bad ? 1 : 0);
+
+    default:
+        $out("Jersey Musium CLI\n\n  migrate | seed | admin:create | orders:expire | cleanup | key:generate | lint");
+}

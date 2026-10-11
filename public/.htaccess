@@ -1,0 +1,64 @@
+# ------------------------------------------------------------------
+# Jersey Musium – Apache / LiteSpeed (Hostinger) config
+# Document root must point to /public
+# ------------------------------------------------------------------
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Force HTTPS (behind proxies too)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Canonical host: redirect bare domain to www (edit if you prefer non-www)
+    # RewriteCond %{HTTP_HOST} ^jerseymusium\.com$ [NC]
+    # RewriteRule ^ https://www.jerseymusium.com%{REQUEST_URI} [L,R=301]
+
+    # Shared hosting (project inside public_html): never expose "/public/..." URLs – 301 to the clean URL
+    RewriteCond %{THE_REQUEST} \s/+public/([^\s?]*) [NC]
+    RewriteRule ^ /%1 [R=301,L]
+
+    # Remove trailing slash (SEO: one URL per page)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Pass Authorization header to PHP
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Front controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Block hidden files (.env, .git…) if ever placed under public
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# ---- Compression ----
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml application/xml
+</IfModule>
+
+# ---- Long-term caching for versioned static assets (?v=…) ----
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|jpg|jpeg|png|webp|svg|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

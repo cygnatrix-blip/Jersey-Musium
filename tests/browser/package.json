@@ -1,0 +1,12 @@
+{
+  "name": "jersey-musium-browser-tests",
+  "private": true,
+  "description": "Real-browser tests: Razorpay test-mode checkout and responsive layout audit (Chromium/Edge via puppeteer-core).",
+  "scripts": {
+    "razorpay": "node razorpay-checkout.js",
+    "responsive": "node responsive.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}

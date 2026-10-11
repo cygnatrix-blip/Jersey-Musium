@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         cacheDirectory="storage/cache/phpunit"
+         failOnWarning="true"
+         failOnRisky="true"
+         displayDetailsOnTestsThatTriggerWarnings="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <!-- Tests ALWAYS run against a separate database; it is wiped and re-migrated on every run. -->
+        <env name="DB_DATABASE" value="jersey_musium_test" force="true"/>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="MAIL_DRIVER" value="log" force="true"/>
+        <env name="RAZORPAY_WEBHOOK_SECRET" value="whsec_unit" force="true"/>
+        <env name="CASHFREE_SECRET_KEY" value="cf_unit_secret" force="true"/>
+        <env name="CASHFREE_APP_ID" value="cf_unit_app" force="true"/>
+    </php>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+</phpunit>
