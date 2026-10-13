@@ -20,7 +20,7 @@ final class OtpServiceTest extends TestCase
         $this->assertStringNotContainsString($code, $row['code_hash'], 'plain code never stored');
 
         $log = (string) file_get_contents(BASE_PATH . '/storage/logs/mail-' . date('Y-m-d') . '.log');
-        $this->assertStringContainsString('To: otp-test@example.com | Your Jersey Musium verification code: ' . $code, $log);
+        $this->assertStringContainsString('To: otp-test@example.com | Your Jersey Museum verification code: ' . $code, $log);
     }
 
     public function testCorrectCodeVerifiesOnceOnly(): void

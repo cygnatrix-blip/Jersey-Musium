@@ -9,8 +9,9 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap/app.php';
 
-if (config('database.database') === env('DB_DATABASE_PROD_GUARD', 'jersey_musium')) {
-    fwrite(STDERR, "Refusing to run tests against the main database.\n");
+// The suite DROPS every table, so it only ever runs on a database whose name ends in "_test".
+if (!str_ends_with((string) config('database.database'), '_test')) {
+    fwrite(STDERR, "Refusing to run tests: DB_DATABASE must end in _test (got '" . config('database.database') . "').\n");
     exit(1);
 }
 

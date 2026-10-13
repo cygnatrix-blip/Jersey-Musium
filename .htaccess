@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Jersey Musium – project-root rules (Hostinger shared hosting / any Apache or LiteSpeed).
+# Jersey Museum – project-root rules (Hostinger shared hosting / any Apache or LiteSpeed).
 # On shared plans the whole project lives in public_html; this file makes sure ONLY the
 # /public folder is reachable from the web and routes every request into it.
 # (If your document root already points at /public, this file is simply never used.)

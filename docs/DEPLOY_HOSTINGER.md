@@ -1,4 +1,4 @@
-# Deploying Jersey Musium on Hostinger Shared Hosting
+# Deploying Jersey Museum on Hostinger Shared Hosting
 
 > **Who this is for:** the store owner or whoever manages the Hostinger account. No programming needed, just hPanel and (ideally) SSH.
 > **Works on:** Hostinger *Premium* and *Business* shared plans (SSH + Git + Cron available). On *Single*, see the note in step 5.
@@ -8,7 +8,7 @@ The code lives on GitHub (`https://github.com/cygnatrix-blip/Jersey-Musium`). Ho
 
 ```
 /home/u123456789/domains/yourdomain.com/
-├── jersey-musium.env      ← your secrets (passwords, keys). OUTSIDE the website folder.
+├── jersey-museum.env      ← your secrets (passwords, keys). OUTSIDE the website folder.
 └── public_html/           ← the project from GitHub
     ├── .htaccess          ← lets the web reach ONLY /public, blocks everything else
     ├── public/            ← the actual website (index.php, images, CSS, JS)
@@ -36,7 +36,7 @@ Choose **one** method and stick with it.
 **Make the ZIP** (on the developer's computer, in the project folder):
 
 ```bash
-php bin/console package        # → dist/jersey-musium-<date>-<commit>.zip
+php bin/console package        # → dist/jersey-museum-<date>-<commit>.zip
 ```
 
 The ZIP contains only what the server needs: app, website files, `database/install/install.sql`, and the protective `.htaccess` files. It never contains your secrets file, tests, docs, logs or uploaded images. Paths inside it are Linux-safe.
@@ -83,19 +83,20 @@ Click **Create**, then **Deploy**.
 
 ## 3. Create the secrets file (outside the website folder)
 
-*File Manager* → go to **`domains/yourdomain.com/`**, the folder that *contains* `public_html` → *New file* → `jersey-musium.env`.
+*File Manager* → go to **`domains/yourdomain.com/`**, the folder that *contains* `public_html` → *New file* → `jersey-museum.env`.
 
-| Your site is… | Project folder | Put `jersey-musium.env` in |
+| Your site is… | Project folder | Put `jersey-museum.env` in |
 |---|---|---|
 | a main domain, e.g. `example.com` | `domains/example.com/public_html` | `domains/example.com/` |
 | a **subdomain inside another site's folder**, e.g. `shop.example.com` | `domains/example.com/public_html/shop` | `domains/example.com/` (**not** `public_html/`, which is the main website's public folder) |
 
 The app searches up to four folders above itself, and always prefers a copy that is outside every `public_html`.
 
-> **Keep the exact name `jersey-musium.env`. Do not rename it to `.env`.**
+> **Keep the exact name `jersey-museum.env`. Do not rename it to `.env`.**
 > The app looks for this file name, one folder above `public_html`, and reads it automatically.
 > * A file called `.env` in that spot is **not** read.
 > * Hostinger's File Manager hides names starting with a dot, so `.env` is easy to lose.
+> * Set up before the brand spelling fix? An existing `jersey-musium.env` is still read. Renaming it to `jersey-museum.env` is optional.
 > * Being outside `public_html` means it can never be downloaded from the web.
 >
 > (A `.env` *inside* `public_html` also works and is blocked by `.htaccess`, but the outside location is safer.)
@@ -103,7 +104,7 @@ The app searches up to four folders above itself, and always prefers a copy that
 Paste the template below and fill in your values. **Real passwords go only in this file on the server, never into files on GitHub.**
 
 ```ini
-APP_NAME="Jersey Musium"
+APP_NAME="Jersey Museum"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://www.yourdomain.com
@@ -139,7 +140,7 @@ MAIL_ENCRYPTION=tls
 MAIL_USERNAME=omkarjana8@gmail.com
 MAIL_PASSWORD="your 16-character app password"
 MAIL_FROM_ADDRESS=omkarjana8@gmail.com
-MAIL_FROM_NAME="Jersey Musium"
+MAIL_FROM_NAME="Jersey Museum"
 
 UPLOAD_MAX_MB=5
 ADMIN_2FA=true
@@ -171,19 +172,19 @@ Hostinger runs PHP as your own user, so 755 is enough. **Never use 777.**
 4. Top menu → **Import** → *Choose file* → select `install.sql` → leave everything else as is (format **SQL**, character set **utf-8**) → **Import** (or *Go*).
 5. You should see a green success message and **35 tables** in the left column, including `admins`, `products`, `orders`, `roles` and `migrations`.
 
-> ✅ This one file contains **all three migrations** (001 tables, 002 GST invoices, 003 email codes) and the starter data: 5 staff roles, 15 categories, 6 policy pages and 2 coupons. Import **only this file**. Do *not* import the separate files in `database/migrations/`.
+> ✅ This one file contains **all four migrations** (001 tables, 002 GST invoices, 003 email codes, 004 brand spelling fix) and the starter data: 5 staff roles, 15 categories, 6 policy pages and 2 coupons. Import **only this file**. Do *not* import the separate files in `database/migrations/`.
 >
 > ⚠️ Import it **once**. If you import it again by mistake, phpMyAdmin stops with "Table 'users' already exists". Nothing is deleted, so just ignore it.
 
 **5.2 Create your Super Admin login (one-time setup page)**
-1. Make sure `SETUP_TOKEN=` in `jersey-musium.env` has a long random value (step 3).
+1. Make sure `SETUP_TOKEN=` in `jersey-museum.env` has a long random value (step 3).
 2. Open **`https://www.yourdomain.com/setup?token=YOUR_SETUP_TOKEN`** in your browser.
 3. **First time:** the page says *"APP_KEY is not set"* and shows a long key.
-   1. Copy it into `APP_KEY=` in `jersey-musium.env` and save.
+   1. Copy it into `APP_KEY=` in `jersey-museum.env` and save.
    2. Click **Check again**.
 4. Fill in your name, the email that should receive admin sign-in codes, and a password (12+ characters, letters and numbers) → **Create Super Admin**.
 5. You land on `/admin/login`. Sign in; a 6-digit code arrives by email.
-6. **Delete the `SETUP_TOKEN=` line** from `jersey-musium.env`. The page already refuses to work once an admin exists, but tidy is safer.
+6. **Delete the `SETUP_TOKEN=` line** from `jersey-museum.env`. The page already refuses to work once an admin exists, but tidy is safer.
 
 > The setup page shows "Not found" if the token is missing or wrong, or if any admin already exists. Nobody else can use it.
 
@@ -192,6 +193,8 @@ Hostinger runs PHP as your own user, so 755 is enough. **Never use 777.**
 2. In the *SQL* tab, run `INSERT INTO migrations (name) VALUES ('004_something.sql');` so the app knows it's done.
 
 The update notes will say when this is needed.
+
+> **Example – brand spelling fix (Musium → Museum):** a database installed before this update still says "Jersey Musium" in the store name, demo product brand and policy pages. Import `database/migrations/004_rename_brand.sql`, then run `INSERT INTO migrations (name) VALUES ('004_rename_brand.sql');`. Running the file twice is harmless.
 
 **Optional: demo products (to see the store filled before you add real stock)**
 1. Upload the 53 demo images. On your computer, take the folder `public/uploads/demo/`, created by `php bin/console demo:sql`, and upload its `.svg` files into the server folder `public_html/public/uploads/demo/`.
@@ -205,7 +208,7 @@ hPanel → *Advanced → SSH Access* → enable, then connect with the shown com
 
 ```bash
 cd ~/domains/yourdomain.com/public_html
-php bin/console key:generate          # copy the printed value into APP_KEY= in jersey-musium.env
+php bin/console key:generate          # copy the printed value into APP_KEY= in jersey-museum.env
 php bin/console migrate               # creates all tables
 php bin/console seed                  # roles, categories, policy pages, coupons (no demo products)
 php bin/console admin:create          # your Super Admin email + password (min 12 chars)
@@ -268,7 +271,7 @@ Then in the store go to **Admin → Settings → Payments** and enable the gatew
 
 **Either way:** if the update contains a new file in `database/migrations/`, import it in phpMyAdmin (step 5, "Future updates") or run `php bin/console migrate` over SSH.
 
-Your `jersey-musium.env`, uploaded product images and logs are in neither the ZIP nor Git, so updates never overwrite them.
+Your `jersey-museum.env`, uploaded product images and logs are in neither the ZIP nor Git, so updates never overwrite them.
 
 ## Troubleshooting
 
@@ -279,6 +282,6 @@ Your `jersey-musium.env`, uploaded product images and logs are in neither the ZI
 | Emails not arriving | Check the `Mail failed` lines in the app log. Gmail needs an **app password** (Google Account → Security → 2-Step Verification → App passwords). If Gmail is blocked or limited, create a mailbox in hPanel → *Emails* and use `smtp.hostinger.com`, port `465`, `MAIL_ENCRYPTION=ssl` |
 | CSS/images missing, pages show "/public/" in URL | The `.htaccess` in `public_html` is missing. Redeploy from Git (dotfiles are included) |
 | Uploaded product images fail | `public/uploads` permission 755; the image is under 5 MB and a JPG, PNG or WEBP |
-| `/setup` says "Not found" | The `SETUP_TOKEN` in the URL must match the secrets file exactly (24+ characters), the file must be named `jersey-musium.env` one level above `public_html`, and no admin may exist yet. If you already created an admin, just sign in at `/admin` |
+| `/setup` says "Not found" | The `SETUP_TOKEN` in the URL must match the secrets file exactly (24+ characters), the file must be named `jersey-museum.env` one level above `public_html`, and no admin may exist yet. If you already created an admin, just sign in at `/admin` |
 | phpMyAdmin import error "Table … already exists" | The database was not empty, so the import stopped without changing anything. Use an empty database, or skip the import if the tables are already there |
 | Payments stay "pending" | Webhook URL or secret mismatch: check Razorpay → Webhooks → *Logs* |

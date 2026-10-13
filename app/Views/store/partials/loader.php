@@ -8,7 +8,7 @@
  * SEO-safe: decorative (aria-hidden), the page content is already in the DOM beneath it.
  */
 $word1 = 'JERSEY';
-$word2 = 'MUSIUM';
+$word2 = 'MUSEUM';
 $i = 0;
 ?>
 <div id="jm-loader" class="jm-loader" aria-hidden="true" data-frequency="<?= e(setting('loader_frequency')) ?>"
@@ -18,7 +18,7 @@ $i = 0;
 
     <div class="jm-copy">
         <p class="jm-kicker"><span class="jm-dot"></span> Kick-off in progress</p>
-        <div class="jm-word" aria-label="Jersey Musium">
+        <div class="jm-word" aria-label="Jersey Museum">
             <span class="jm-w"><?php foreach (str_split($word1) as $ch): ?><b style="--i:<?= $i++ ?>"><?= $ch ?></b><?php endforeach; ?></span>
             <span class="jm-w jm-w--accent"><?php foreach (str_split($word2) as $ch): ?><b style="--i:<?= $i++ ?>"><?= $ch ?></b><?php endforeach; ?></span>
         </div>

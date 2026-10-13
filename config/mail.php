@@ -9,6 +9,6 @@ return [
     'password'   => env('MAIL_PASSWORD', ''),
     'from'       => [
         'address' => env('MAIL_FROM_ADDRESS', 'no-reply@example.com'),
-        'name'    => env('MAIL_FROM_NAME', 'Jersey Musium'),
+        'name'    => env('MAIL_FROM_NAME', 'Jersey Museum'),
     ],
 ];

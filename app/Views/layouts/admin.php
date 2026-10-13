@@ -36,7 +36,7 @@ $path = request()->path();
     <aside class="side" id="side">
         <a class="side__brand" href="/admin">
             <img src="<?= e(asset('img/logo-mark.svg')) ?>" alt="" width="30" height="30">
-            <div>Jersey <span>Musium</span><small>ADMIN CONSOLE</small></div>
+            <div>Jersey <span>Museum</span><small>ADMIN CONSOLE</small></div>
         </a>
         <nav aria-label="Admin">
             <?php foreach ($nav as $section => $links):

@@ -1,5 +1,5 @@
 {
-  "name": "jersey-musium-browser-tests",
+  "name": "jersey-museum-browser-tests",
   "private": true,
   "description": "Real-browser tests: Razorpay test-mode checkout and responsive layout audit (Chromium/Edge via puppeteer-core).",
   "scripts": {

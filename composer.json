@@ -1,6 +1,6 @@
 {
-    "name": "jerseymusium/store",
-    "description": "Jersey Musium - e-commerce platform for football & sports jerseys",
+    "name": "jerseymuseum/store",
+    "description": "Jersey Museum - e-commerce platform for football & sports jerseys",
     "type": "project",
     "license": "proprietary",
     "require": {

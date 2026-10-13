@@ -61,7 +61,7 @@ async function clickSuccess(ctx) {
     let code = null;
     for (let i = 0; i < 20 && !code; i++) {
       await sleep(300);
-      const m = [...require('fs').readFileSync(log, 'utf8').matchAll(new RegExp(email.replace(/[.+]/g, '\\$&') + ' \\| Your Jersey Musium verification code: (\\d{6})', 'g'))];
+      const m = [...require('fs').readFileSync(log, 'utf8').matchAll(new RegExp(email.replace(/[.+]/g, '\\$&') + ' \\| Your Jersey Museum verification code: (\\d{6})', 'g'))];
       if (m.length) code = m[m.length - 1][1];
     }
     await page.screenshot({ path: OUT + 'verify-email.png' });

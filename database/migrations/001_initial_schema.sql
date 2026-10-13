@@ -1,5 +1,5 @@
 -- =====================================================================
--- Jersey Musium – initial schema (MySQL 8.0+ / MariaDB 10.6+)
+-- Jersey Museum – initial schema (MySQL 8.0+ / MariaDB 10.6+)
 -- Engine InnoDB (transactions + FKs), charset utf8mb4.
 -- Money columns are DECIMAL(12,2) in INR; application maths is done in paise.
 -- =====================================================================

@@ -1,4 +1,4 @@
-/*! Jersey Musium admin – small enhancements */
+/*! Jersey Museum admin – small enhancements */
 (function () {
     'use strict';
     var $ = function (s, r) { return (r || document).querySelector(s); };

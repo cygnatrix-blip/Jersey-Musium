@@ -1,4 +1,4 @@
-# Jersey Musium
+# Jersey Museum
 
 E-commerce platform for football jerseys. PHP 8 + MySQL, Razorpay & Cashfree payments, a full admin console, and an interactive "kick-off" intro animation.
 
@@ -41,7 +41,7 @@ composer audit                                         # dependency CVEs
 ## Build an upload ZIP (manual deployment)
 
 ```bash
-php bin/console package    # → dist/jersey-musium-<date>-<commit>.zip (no secrets, tests or docs inside)
+php bin/console package    # → dist/jersey-museum-<date>-<commit>.zip (no secrets, tests or docs inside)
 ```
 
 ## Cron (production)

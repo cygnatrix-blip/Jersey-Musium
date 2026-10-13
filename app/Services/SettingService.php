@@ -15,9 +15,9 @@ final class SettingService
 {
     public const DEFAULTS = [
         // Store identity
-        'store_name'              => 'Jersey Musium',
+        'store_name'              => 'Jersey Museum',
         'store_tagline'           => 'Authentic Football Jerseys Online',
-        'store_email'             => 'support@jerseymusium.com',
+        'store_email'             => 'support@jerseymuseum.com',
         'store_phone'             => '+91 90000 00000',
         'store_address'           => 'Kolkata, West Bengal, India',
         'store_gstin'             => '',

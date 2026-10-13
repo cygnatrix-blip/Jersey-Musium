@@ -1,5 +1,5 @@
 /*!
- * Jersey Musium – "Kick-off" intro loader controller.
+ * Jersey Museum – "Kick-off" intro loader controller.
  * - Real load progress (min 2.6s so the impact moment always plays, max 6s)
  * - Turf/spark particle burst at the ball on impact & on every tap
  * - Pointer / touch parallax

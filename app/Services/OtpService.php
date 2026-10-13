@@ -32,7 +32,7 @@ final class OtpService
 
         [$subject, $heading, $intro] = match ($purpose) {
             'admin_login'  => ['Your admin sign-in code: ' . $code, 'Admin sign-in code', 'Use this code to finish signing in to the admin console.'],
-            default        => ['Your Jersey Musium verification code: ' . $code, 'Verify your email', 'Hi ' . e($name ?: 'there') . ', use this code to verify your email address and activate your account.'],
+            default        => ['Your Jersey Museum verification code: ' . $code, 'Verify your email', 'Hi ' . e($name ?: 'there') . ', use this code to verify your email address and activate your account.'],
         };
         Mailer::sendView($email, $subject, 'notification', [
             'heading' => $heading,

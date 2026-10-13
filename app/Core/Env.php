@@ -12,17 +12,23 @@ final class Env
 {
     private static array $values = [];
 
+    /** Secrets file names, in order of preference ("jersey-musium.env" = name used before the brand spelling fix). */
+    public const FILE_NAMES = ['jersey-museum.env', 'jersey-musium.env'];
+
     /**
-     * Find the secrets file: "jersey-musium.env" in one of the 4 folders above $basePath, preferring a copy
-     * that is outside every public_html (not downloadable). Falls back to "$basePath/.env".
+     * Find the secrets file: "jersey-museum.env" (or the legacy "jersey-musium.env") in one of the 4 folders
+     * above $basePath, preferring a copy that is outside every public_html (not downloadable), then the
+     * current name over the legacy one. Falls back to "$basePath/.env".
      */
-    public static function locate(string $basePath, string $name = 'jersey-musium.env'): string
+    public static function locate(string $basePath, array $names = self::FILE_NAMES): string
     {
         $found = [];
-        $dir = dirname($basePath);
-        for ($i = 0; $i < 4 && $dir !== dirname($dir); $i++, $dir = dirname($dir)) {
-            if (@is_file($dir . '/' . $name)) { // @: folders outside open_basedir simply don't count
-                $found[] = $dir . '/' . $name;
+        foreach ($names as $name) {
+            $dir = dirname($basePath);
+            for ($i = 0; $i < 4 && $dir !== dirname($dir); $i++, $dir = dirname($dir)) {
+                if (@is_file($dir . '/' . $name)) { // @: folders outside open_basedir simply don't count
+                    $found[] = $dir . '/' . $name;
+                }
             }
         }
         $private = array_values(array_filter($found, static fn ($f) => !preg_match('#/public_html/#', str_replace('\\', '/', $f))));

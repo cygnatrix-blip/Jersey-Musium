@@ -13,7 +13,7 @@
 <div class="card">
     <div class="flex center gap mb-2">
         <img src="<?= e(asset('img/logo-mark.svg')) ?>" alt="" width="40" height="40">
-        <div style="font:800 italic 24px/1 var(--display);text-transform:uppercase">Jersey <span style="color:var(--brand)">Musium</span></div>
+        <div style="font:800 italic 24px/1 var(--display);text-transform:uppercase">Jersey <span style="color:var(--brand)">Museum</span></div>
     </div>
     <?php $otpStep = ($step ?? 'password') === 'otp'; ?>
     <h1 style="font-size:18px"><?= $otpStep ? 'Two-step verification' : 'Admin console' ?></h1>

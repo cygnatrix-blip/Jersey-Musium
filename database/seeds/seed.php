@@ -142,7 +142,7 @@ $demo = [
     ['Netherlands 1988 Retro Jersey', 'Netherlands', 'Retro', 'retro-classics', '#f36c21', '#ffffff', '#ffffff', 'none', 'NED', 2199, 1399, 'retro', 0],
     ['Kids Argentina Home Kit', 'Argentina', 'FIFA World Cup', 'kids', '#75AADB', '#ffffff', '#1c2230', 'stripes', 'ARG', 1499, 899, 'home', 0],
     ['Kids Brazil Home Kit', 'Brazil', 'FIFA World Cup', 'kids', '#f7d117', '#0b8e36', '#0b3d91', 'none', 'BRA', 1499, 899, 'home', 0],
-    ['Pro Training Top – Black/Red', 'Jersey Musium', 'Training', 'training-wear', '#151515', '#e11d48', '#ffffff', 'hoops', 'JM', 1299, 699, 'training', 0],
+    ['Pro Training Top – Black/Red', 'Jersey Museum', 'Training', 'training-wear', '#151515', '#e11d48', '#ffffff', 'hoops', 'JM', 1299, 699, 'training', 0],
 ];
 $names = ['MESSI' => '10', 'RONALDO' => '7', 'NEYMAR' => '10', 'CHHETRI' => '11', 'MUSIALA' => '42', 'HAKIMI' => '2'];
 $n = 0;
@@ -154,7 +154,7 @@ foreach ($demo as $i => [$name, $team, $league, $cat, $pc, $sc, $ac, $pat, $code
     $sku = 'JM-' . strtoupper(substr(md5($slug), 0, 6));
     $isKids = $cat === 'kids';
     $pid = db()->insert('products', [
-        'category_id' => $catIds[$cat], 'name' => $name, 'slug' => $slug, 'sku' => $sku, 'brand' => 'Jersey Musium',
+        'category_id' => $catIds[$cat], 'name' => $name, 'slug' => $slug, 'sku' => $sku, 'brand' => 'Jersey Museum',
         'team' => $team, 'league' => $league, 'season' => $kit === 'retro' ? 'Retro' : '2026/27', 'kit_type' => $kit,
         'gender' => $isKids ? 'kids' : 'unisex',
         'short_description' => "Breathable fan-edition $team jersey with moisture-wicking fabric and a relaxed match-day fit.",

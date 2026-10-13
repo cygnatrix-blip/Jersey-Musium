@@ -15,7 +15,7 @@ final class EnvTest extends TestCase
         file_put_contents($f, implode("\n", [
             '# comment line',
             'JMT_PLAIN=value   # trailing comment',
-            'JMT_QUOTED="Jersey Musium # not a comment"',
+            'JMT_QUOTED="Jersey Museum # not a comment"',
             "JMT_SINGLE='a b c'",
             'JMT_BOOL=true',
             'JMT_EMPTY=',
@@ -24,7 +24,7 @@ final class EnvTest extends TestCase
         Env::load($f);
         unlink($f);
         $this->assertSame('value', Env::get('JMT_PLAIN'));
-        $this->assertSame('Jersey Musium # not a comment', Env::get('JMT_QUOTED'));
+        $this->assertSame('Jersey Museum # not a comment', Env::get('JMT_QUOTED'));
         $this->assertSame('a b c', Env::get('JMT_SINGLE'));
         $this->assertTrue(Env::get('JMT_BOOL'));
         $this->assertSame('fallback', Env::get('JMT_EMPTY', 'fallback'));
@@ -46,22 +46,32 @@ final class EnvTest extends TestCase
     public function testLocatesSecretsFileForSubdomainInsideMainSiteFolder(): void
     {
         // Real Hostinger layout of jerseymusium.cygnatrix.com: project in .../cygnatrix.com/public_html/jerseymusium
-        $root = $this->tree(['domains/cygnatrix.com/jersey-musium.env', 'domains/cygnatrix.com/public_html/jerseymusium/']);
-        $this->assertSame("$root/domains/cygnatrix.com/jersey-musium.env",
+        $root = $this->tree(['domains/cygnatrix.com/jersey-museum.env', 'domains/cygnatrix.com/public_html/jerseymusium/']);
+        $this->assertSame("$root/domains/cygnatrix.com/jersey-museum.env",
             str_replace('\\', '/', Env::locate("$root/domains/cygnatrix.com/public_html/jerseymusium")));
     }
 
     public function testMainDomainLayout(): void
     {
-        $root = $this->tree(['domains/example.com/jersey-musium.env', 'domains/example.com/public_html/']);
-        $this->assertSame("$root/domains/example.com/jersey-musium.env", str_replace('\\', '/', Env::locate("$root/domains/example.com/public_html")));
+        $root = $this->tree(['domains/example.com/jersey-museum.env', 'domains/example.com/public_html/']);
+        $this->assertSame("$root/domains/example.com/jersey-museum.env", str_replace('\\', '/', Env::locate("$root/domains/example.com/public_html")));
     }
 
     public function testPrefersCopyOutsidePublicHtml(): void
     {
         // A copy in the main site's public_html (downloadable!) must lose against one above public_html.
-        $root = $this->tree(['domains/x.com/public_html/jersey-musium.env', 'domains/x.com/jersey-musium.env', 'domains/x.com/public_html/shop/']);
-        $this->assertSame("$root/domains/x.com/jersey-musium.env", str_replace('\\', '/', Env::locate("$root/domains/x.com/public_html/shop")));
+        $root = $this->tree(['domains/x.com/public_html/jersey-museum.env', 'domains/x.com/jersey-museum.env', 'domains/x.com/public_html/shop/']);
+        $this->assertSame("$root/domains/x.com/jersey-museum.env", str_replace('\\', '/', Env::locate("$root/domains/x.com/public_html/shop")));
+    }
+
+    public function testLegacyFileNameStillWorksAndNewNameWins(): void
+    {
+        // Servers set up before the brand spelling fix keep working with "jersey-musium.env" …
+        $root = $this->tree(['domains/a.com/jersey-musium.env', 'domains/a.com/public_html/']);
+        $this->assertSame("$root/domains/a.com/jersey-musium.env", str_replace('\\', '/', Env::locate("$root/domains/a.com/public_html")));
+        // … and once "jersey-museum.env" exists next to it, the new name is used.
+        $root = $this->tree(['domains/b.com/jersey-musium.env', 'domains/b.com/jersey-museum.env', 'domains/b.com/public_html/']);
+        $this->assertSame("$root/domains/b.com/jersey-museum.env", str_replace('\\', '/', Env::locate("$root/domains/b.com/public_html")));
     }
 
     public function testFallsBackToProjectDotEnv(): void

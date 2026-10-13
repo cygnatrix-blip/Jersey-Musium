@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
-    <title>Store setup · Jersey Musium</title>
+    <title>Store setup · Jersey Museum</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="<?= e(asset('css/admin.css')) ?>">
 </head>
@@ -13,7 +13,7 @@
 <div class="card" style="max-width:460px">
     <div class="flex center gap mb-2">
         <img src="<?= e(asset('img/logo-mark.svg')) ?>" alt="" width="40" height="40">
-        <div style="font:800 italic 22px/1 var(--display);text-transform:uppercase">Jersey <span style="color:var(--brand)">Musium</span></div>
+        <div style="font:800 italic 22px/1 var(--display);text-transform:uppercase">Jersey <span style="color:var(--brand)">Museum</span></div>
     </div>
     <h1 style="font-size:18px">One-time setup: create the Super Admin</h1>
     <p class="muted">This page works only once, while the store has no admin account.</p>

@@ -7,7 +7,7 @@
     <tr><td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden">
             <tr><td style="background:#0b1020;padding:20px 28px;color:#fff;font-size:22px;font-weight:800;letter-spacing:.5px;font-style:italic">
-                JERSEY <span style="color:#e11d48">MUSIUM</span>
+                JERSEY <span style="color:#e11d48">MUSEUM</span>
             </td></tr>
             <tr><td style="padding:28px"><?= $content ?></td></tr>
             <tr><td style="padding:18px 28px;background:#fafafa;color:#7e818c;font-size:12px;line-height:1.6">

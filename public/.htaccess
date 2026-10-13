@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------
-# Jersey Musium – Apache / LiteSpeed (Hostinger) config
+# Jersey Museum – Apache / LiteSpeed (Hostinger) config
 # Document root must point to /public
 # ------------------------------------------------------------------
 Options -Indexes -MultiViews
@@ -15,8 +15,8 @@ DirectoryIndex index.php
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Canonical host: redirect bare domain to www (edit if you prefer non-www)
-    # RewriteCond %{HTTP_HOST} ^jerseymusium\.com$ [NC]
-    # RewriteRule ^ https://www.jerseymusium.com%{REQUEST_URI} [L,R=301]
+    # RewriteCond %{HTTP_HOST} ^jerseymuseum\.com$ [NC]
+    # RewriteRule ^ https://www.jerseymuseum.com%{REQUEST_URI} [L,R=301]
 
     # Shared hosting (project inside public_html): never expose "/public/..." URLs – 301 to the clean URL
     RewriteCond %{THE_REQUEST} \s/+public/([^\s?]*) [NC]

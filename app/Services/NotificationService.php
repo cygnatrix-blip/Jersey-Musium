@@ -80,7 +80,7 @@ final class NotificationService
 
     public static function passwordReset(string $email, string $link): void
     {
-        Mailer::sendView($email, 'Reset your Jersey Musium password', 'notification', [
+        Mailer::sendView($email, 'Reset your Jersey Museum password', 'notification', [
             'heading' => 'Reset your password',
             'lines'   => ['We received a request to reset your password. This link is valid for 60 minutes.', 'If you did not request this, you can safely ignore this email.'],
             'cta'     => ['Reset password', $link],
@@ -89,7 +89,7 @@ final class NotificationService
 
     public static function welcome(array $user): void
     {
-        Mailer::sendView($user['email'], 'Welcome to Jersey Musium', 'notification', [
+        Mailer::sendView($user['email'], 'Welcome to Jersey Museum', 'notification', [
             'heading' => 'Welcome to the club, ' . explode(' ', $user['name'])[0] . '!',
             'lines'   => ['Your account is ready. Explore club kits, national team jerseys and retro classics.'],
             'cta'     => ['Start shopping', url('/shop')],

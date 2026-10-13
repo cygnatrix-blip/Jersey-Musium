@@ -62,7 +62,7 @@ $sellerState = (string) setting('store_state');
 <div class="inv">
     <div class="head">
         <div>
-            <div class="brand">JERSEY <span>MUSIUM</span></div>
+            <div class="brand">JERSEY <span>MUSEUM</span></div>
             <div><?= e(setting('store_name')) ?><br><?= nl2br(e(setting('store_address'))) ?><br><?= e(setting('store_email')) ?> · <?= e(setting('store_phone')) ?></div>
             <div style="margin-top:4px"><strong>GSTIN:</strong> <?= e(setting('store_gstin') ?: 'Not configured') ?> &nbsp; <strong>State:</strong> <?= e($sellerState) ?> (<?= e(InvoiceService::STATE_CODES[$sellerState] ?? '—') ?>)</div>
         </div>

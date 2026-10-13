@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 /*
- * Jersey Musium CLI
+ * Jersey Museum CLI
  *   php bin/console migrate            Run pending SQL migrations
  *   php bin/console seed               Seed roles, categories, CMS pages, demo catalog & coupons
  *   php bin/console admin:create       Create a Super Admin (interactive or --email= --name= --password=)
@@ -73,7 +73,7 @@ switch ($cmd) {
         $files = glob(BASE_PATH . '/database/migrations/*.sql');
         sort($files);
         $sql = "-- =====================================================================\n"
-            . "-- Jersey Musium – complete database install for phpMyAdmin\n"
+            . "-- Jersey Museum – complete database install for phpMyAdmin\n"
             . "-- Generated " . date('Y-m-d H:i') . " by `php bin/console install:sql` – do not edit by hand.\n"
             . "-- Import ONCE into an EMPTY database (phpMyAdmin → select database → Import).\n"
             . "-- It never drops tables: on a non-empty database it stops at the first error.\n"
@@ -184,12 +184,12 @@ switch ($cmd) {
         $envPath = str_replace('\\', '/', realpath(ENV_FILE) ?: ENV_FILE);
         $inProject = str_starts_with($envPath, str_replace('\\', '/', BASE_PATH) . '/');
         if (!is_file(ENV_FILE)) {
-            $add('FAIL', 'Secrets file not found – put jersey-musium.env in a folder above the project (outside public_html)');
+            $add('FAIL', 'Secrets file not found – put jersey-museum.env in a folder above the project (outside public_html)');
         } elseif (!$inProject && preg_match('#/public_html/#', $envPath)) {
             // e.g. a subdomain in public_html/shop with the file in public_html/ → downloadable via the MAIN website!
             $add('FAIL', 'Secrets file ' . ENV_FILE . ' sits in ANOTHER website\'s public folder and may be downloadable – move it above public_html');
         } elseif ($inProject && preg_match('#/public_html(/|$)#', str_replace('\\', '/', BASE_PATH))) {
-            $add('WARN', 'Secrets file: ' . ENV_FILE . ' – inside public_html (blocked by .htaccess, but better moved above public_html as jersey-musium.env)');
+            $add('WARN', 'Secrets file: ' . ENV_FILE . ' – inside public_html (blocked by .htaccess, but better moved above public_html as jersey-museum.env)');
         } else {
             $add('PASS', 'Secrets file: ' . ENV_FILE);
         }
@@ -235,7 +235,7 @@ switch ($cmd) {
         require BASE_PATH . '/database/seeds/seed.php';          // + demo catalog & banners (writes SVGs)
         $out = $outBackup;
         $sql = "-- =====================================================================\n"
-            . "-- Jersey Musium – DEMO catalog for phpMyAdmin (24 jerseys, sizes & stock, images, banners)\n"
+            . "-- Jersey Museum – DEMO catalog for phpMyAdmin (24 jerseys, sizes & stock, images, banners)\n"
             . "-- Generated " . date('Y-m-d H:i') . " by `php bin/console demo:sql`.\n"
             . "-- Import AFTER install.sql, into a store that has no products/banners yet.\n"
             . "-- Images: upload public/uploads/demo/*.svg to the server folder public/uploads/demo/.\n"
@@ -256,7 +256,7 @@ switch ($cmd) {
         break;
 
     case 'package':
-        // Builds dist/jersey-musium-<date>-<commit>.zip for manual upload (Hostinger File Manager → Extract).
+        // Builds dist/jersey-museum-<date>-<commit>.zip for manual upload (Hostinger File Manager → Extract).
         // Contains only what the server needs; never .env, tests, docs, dev tools, logs or uploaded images.
         if (!class_exists(ZipArchive::class)) {
             $out('PHP zip extension missing.');
@@ -269,7 +269,7 @@ switch ($cmd) {
             '#(^|/)\.DS_Store$|(^|/)Thumbs\.db$#',
         ];
         $commit = trim((string) @shell_exec('git -C ' . escapeshellarg(BASE_PATH) . ' rev-parse --short HEAD 2>' . (DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null'))) ?: 'local';
-        $name = 'jersey-musium-' . date('Ymd-Hi') . '-' . $commit . '.zip';
+        $name = 'jersey-museum-' . date('Ymd-Hi') . '-' . $commit . '.zip';
         @mkdir(BASE_PATH . '/dist', 0755, true);
         $zipPath = BASE_PATH . '/dist/' . $name;
         $zip = new ZipArchive();
@@ -295,7 +295,7 @@ switch ($cmd) {
                 $count++;
             }
         }
-        $zip->setArchiveComment("Jersey Musium $commit – extract inside the website folder. Secrets file (jersey-musium.env) is NOT included by design.");
+        $zip->setArchiveComment("Jersey Museum $commit – extract inside the website folder. Secrets file (jersey-museum.env) is NOT included by design.");
         $zip->close();
         $out("Wrote dist/$name ($count files, " . number_format(filesize($zipPath) / 1048576, 2) . ' MB)');
         break;
@@ -323,5 +323,5 @@ switch ($cmd) {
         exit($bad ? 1 : 0);
 
     default:
-        $out("Jersey Musium CLI\n\n  migrate | seed | admin:create | orders:expire | cleanup | key:generate | lint");
+        $out("Jersey Museum CLI\n\n  migrate | seed | admin:create | orders:expire | cleanup | key:generate | lint");
 }

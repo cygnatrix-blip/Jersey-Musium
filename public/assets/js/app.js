@@ -1,5 +1,5 @@
 /*!
- * Jersey Musium storefront – progressive enhancement (site works without JS).
+ * Jersey Museum storefront – progressive enhancement (site works without JS).
  */
 (function () {
     'use strict';

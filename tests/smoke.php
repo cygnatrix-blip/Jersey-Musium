@@ -151,7 +151,7 @@ check($r['code'] === 302 && db()->scalar('SELECT 1 FROM users WHERE email = :e',
 echo "\nEmail OTP verification\n";
 check($r['location'] === '/verify-email', 'sign-up redirects to email verification');
 check(db()->scalar('SELECT email_verified_at FROM users WHERE email = :e', ['e' => $email]) === null, 'new account starts unverified');
-$code = mailCode($email, 'Your Jersey Musium verification code: ');
+$code = mailCode($email, 'Your Jersey Museum verification code: ');
 check((bool) preg_match('/^\d{6}$/', (string) $code), '6-digit code emailed to the customer');
 check($c->get('/checkout')['location'] === '/verify-email', 'checkout blocked until email is verified');
 $c->post('/verify-email', ['code' => $code === '000000' ? '111111' : '000000'], '/verify-email');
@@ -159,7 +159,7 @@ check(db()->scalar('SELECT email_verified_at FROM users WHERE email = :e', ['e' 
 check(str_contains($c->get('/verify-email')['body'], 'Incorrect code. 4 attempt(s) left.'), 'remaining attempts shown (4 left)');
 $c->post('/verify-email/resend', [], '/verify-email');
 check(str_contains($c->get('/verify-email')['body'], 'Please wait'), 'immediate resend refused (cooldown)');
-check(mailCode($email, 'Your Jersey Musium verification code: ') === $code, 'no new code issued during cooldown');
+check(mailCode($email, 'Your Jersey Museum verification code: ') === $code, 'no new code issued during cooldown');
 $r = $c->post('/verify-email', ['code' => $code], '/verify-email');
 check(db()->scalar('SELECT email_verified_at FROM users WHERE email = :e', ['e' => $email]) !== null, 'correct code verifies the email');
 check($c->post('/verify-email', ['code' => $code], '/account')['location'] === '/account', 'code cannot be reused');
@@ -282,7 +282,7 @@ check($v['status'] === 'deleted' && $v['email'] !== $victim && $v['phone'] === n
 
 echo "\nTeam & RBAC guards\n";
 $roleId = (int) db()->insert('roles', ['name' => 'Ops Lead', 'slug' => 'ops_lead_' . bin2hex(random_bytes(2)), 'permissions' => json_encode(['dashboard.view', 'admins.manage', 'orders.view'])]);
-$opsEmail = 'ops+' . bin2hex(random_bytes(3)) . '@jerseymusium.test';
+$opsEmail = 'ops+' . bin2hex(random_bytes(3)) . '@jerseymuseum.test';
 $a->post('/admin/team/admins', ['name' => 'Ops Lead', 'email' => $opsEmail, 'role_id' => $roleId, 'password' => 'OpsLeadPass!2026', 'password_confirmation' => 'OpsLeadPass!2026'], '/admin/team/admins/create');
 $opsId = (int) db()->scalar('SELECT id FROM admins WHERE email = :e', ['e' => $opsEmail]);
 check($opsId > 0, 'super admin creates a limited admin');

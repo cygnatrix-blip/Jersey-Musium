@@ -1,4 +1,4 @@
-# Jersey Musium — Security & Quality Audit Report
+# Jersey Museum — Security & Quality Audit Report
 
 | | |
 |---|---|
